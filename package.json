@@ -1,0 +1,75 @@
+{
+  "name": "zafs_admin",
+  "version": "1.0.0",
+  "description": "Zaf's Kitchen Admin Dashboard",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "server": "node server.js",
+    "server:dev": "nodemon server.js",
+    "dev": "cross-env NODE_ENV=development concurrently --kill-others --names \"SERVER,ELECTRON\" --prefix-colors \"bgBlue.bold,bgMagenta.bold\" \"npm run server:dev\" \"wait-on http://localhost:3000 && electron .\"",
+    "dev:simple": "cross-env NODE_ENV=development concurrently \"npm run server:dev\" \"npm start\"",
+    "dev:server-only": "nodemon server.js",
+    "dev:electron-only": "cross-env NODE_ENV=development electron .",
+    "prod": "cross-env NODE_ENV=production electron .",
+    "prod:with-server": "cross-env NODE_ENV=production concurrently \"node server.js\" \"electron .\"",
+    "build": "electron-builder",
+    "dist": "electron-builder",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.75.0",
+    "axios": "^1.13.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "nodemailer": "^7.0.10",
+    "pg": "^8.16.3",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.13.3",
+    "nodemon": "^3.1.11",
+    "wait-on": "^7.2.0"
+  },
+  "keywords": [
+    "electron",
+    "admin-dashboard",
+    "zafs-kitchen",
+    "supabase",
+    "qr-login"
+  ],
+  "author": "Zaf's Kitchen Dev Team",
+  "license": "MIT",
+  "build": {
+    "appId": "com.zafskitchen.admin",
+    "productName": "Zaf's Kitchen Admin",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "server.js",
+      "db.js",
+      "renderer/**/*",
+      "logo-desktop/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "logo-desktop/logo.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "logo-desktop/logo.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "logo-desktop/logo.png"
+    }
+  }
+}

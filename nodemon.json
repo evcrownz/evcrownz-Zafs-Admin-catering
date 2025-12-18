@@ -1,0 +1,14 @@
+{
+  "watch": ["server.js", ".env", "*.html"],
+  "ignore": ["node_modules", "*.log"],
+  "delay": 1000,
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "events": {
+    "start": "echo ✅ Server started on http://localhost:3000",
+    "restart": "echo 🔄 Server restarted due to file changes..."
+  },
+  "colours": true,
+  "verbose": true
+}

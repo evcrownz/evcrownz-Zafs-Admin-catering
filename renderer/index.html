@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login - Zaf's Kitchen</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <style>
+    body {
+      background: linear-gradient(135deg, #DC2626 0%, #C94A1F 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-container {
+      animation: slideIn 0.5s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .spinner {
+      border: 3px solid #f3f4f6;
+      border-top: 3px solid #DC2626;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .shake {
+      animation: shake 0.5s;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
+    }
+
+    .step {
+      display: none;
+    }
+
+    .step.active {
+      display: block;
+    }
+
+    .otp-input {
+      width: 50px;
+      height: 60px;
+      font-size: 24px;
+      text-align: center;
+      border: 2px solid #d1d5db;
+      border-radius: 8px;
+      transition: all 0.3s;
+    }
+
+    .otp-input:focus {
+      outline: none;
+      border-color: #DC2626;
+      box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+    }
+
+    .otp-input.filled {
+      border-color: #DC2626;
+      background-color: #fef2f2;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .pulse {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="login-container w-full max-w-lg px-6">
+    <!-- Logo and Title -->
+    <div class="text-center mb-8">
+      <div class="bg-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg overflow-hidden">
+        <img src="logo/logo.png" alt="Zaf's Kitchen Logo" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <i class="fas fa-utensils text-4xl hidden" style="color: #DC2626;"></i>
+      </div>
+      <h1 class="text-3xl font-bold text-white mb-2">Zaf's Kitchen</h1>
+      <p class="text-white text-opacity-90">Admin Dashboard Login</p>
+    </div>
+
+    <!-- Login Card -->
+    <div class="bg-white rounded-2xl shadow-2xl p-8">
+      
+      <!-- Step 1: Email Verification -->
+      <div id="emailStep" class="step active">
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">Admin Login</h2>
+        <p class="text-gray-600 mb-6">Enter your admin email to receive verification code</p>
+
+        <form id="emailForm" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-envelope mr-2"></i>Admin Email Address
+            </label>
+            <input 
+              type="email" 
+              id="emailInput" 
+              required
+              placeholder="Enter your admin email"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            />
+          </div>
+
+          <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-3 text-xs text-blue-800">
+            <i class="fas fa-shield-alt mr-2"></i>
+            A 6-digit verification code will be sent to your email
+          </div>
+
+          <div id="emailError" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <span id="emailErrorText"></span>
+          </div>
+
+          <button 
+            type="submit"
+            id="sendOtpBtn"
+            class="w-full text-white py-4 rounded-lg font-semibold transition-all duration-300 hover:opacity-90 flex items-center justify-center gap-2"
+            style="background-color: #DC2626;"
+          >
+            <span id="sendOtpText">Request Verification Code</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Step 2: OTP Verification -->
+      <div id="otpStep" class="step">
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">Enter Verification Code</h2>
+        <p class="text-gray-600 mb-2">We sent a code to</p>
+        <p class="text-gray-800 font-semibold mb-6" id="displayEmail"></p>
+
+        <form id="otpForm" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-3 text-center">
+              <i class="fas fa-key mr-2"></i>Enter 6-Digit Code
+            </label>
+            <div class="flex justify-center gap-2 mb-4">
+              <input type="text" maxlength="1" class="otp-input" data-index="0" />
+              <input type="text" maxlength="1" class="otp-input" data-index="1" />
+              <input type="text" maxlength="1" class="otp-input" data-index="2" />
+              <input type="text" maxlength="1" class="otp-input" data-index="3" />
+              <input type="text" maxlength="1" class="otp-input" data-index="4" />
+              <input type="text" maxlength="1" class="otp-input" data-index="5" />
+            </div>
+          </div>
+
+          <div class="text-center">
+            <p class="text-sm text-gray-600 mb-2">
+              Didn't receive the code?
+            </p>
+            <button 
+              type="button"
+              id="resendBtn"
+              onclick="resendOTP()"
+              class="text-red-600 hover:text-red-700 font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled
+            >
+              <i class="fas fa-redo mr-1"></i>
+              <span id="resendText">Resend Code (60s)</span>
+            </button>
+          </div>
+
+          <div id="otpError" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <span id="otpErrorText"></span>
+          </div>
+
+          <button 
+            type="submit"
+            id="verifyOtpBtn"
+            class="w-full text-white py-4 rounded-lg font-semibold transition-all duration-300 hover:opacity-90 flex items-center justify-center gap-2"
+            style="background-color: #DC2626;"
+          >
+            <span id="verifyOtpText">Verify & Access Dashboard</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Step 3: Success -->
+      <div id="successStep" class="step text-center py-8">
+        <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-check-circle text-5xl text-green-600"></i>
+        </div>
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">Access Granted!</h2>
+        <p class="text-gray-600 mb-4">Welcome back, Admin</p>
+        <div class="spinner mx-auto"></div>
+        <p class="text-sm text-gray-500 mt-2">Redirecting to dashboard...</p>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <p class="text-center text-white text-opacity-80 text-sm mt-6">
+      © 2020 Zaf's Kitchen. All rights reserved.
+    </p>
+  </div>
+
+  <script>
+    let verifiedEmail = null;
+    let resendTimer = null;
+    let resendCountdown = 60;
+
+    // Step 1: Send OTP
+    document.getElementById('emailForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('emailInput').value.trim().toLowerCase();
+      const sendBtn = document.getElementById('sendOtpBtn');
+      const btnText = document.getElementById('sendOtpText');
+
+      if (!isValidEmail(email)) {
+        showError('emailError', 'emailErrorText', 'Please enter a valid email address');
+        shakeElement('emailInput');
+        return;
+      }
+
+      sendBtn.disabled = true;
+      btnText.innerHTML = '<div class="spinner"></div> Sending verification code...';
+
+      try {
+        // Check if authorized admin email
+        if (email !== 'zafskitchen95@gmail.com') {
+          showError('emailError', 'emailErrorText', 'Unauthorized email. Only admin can access this system.');
+          shakeElement('emailInput');
+          sendBtn.disabled = false;
+          btnText.textContent = 'Request Verification Code';
+          return;
+        }
+
+        const response = await fetch('http://localhost:3000/api/send-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+          verifiedEmail = email;
+          hideError('emailError');
+          showStep('otpStep');
+          document.getElementById('displayEmail').textContent = email;
+          document.querySelector('.otp-input').focus();
+          startResendTimer();
+        } else {
+          showError('emailError', 'emailErrorText', result.message || 'Failed to send verification code. Please try again.');
+          shakeElement('emailInput');
+        }
+        } catch (error) {
+            console.error('Send OTP error:', error);
+            
+            // Check what type of error it is
+            if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                showError('emailError', 'emailErrorText', 'Cannot connect to server. Please restart the application or check your connection.');
+            } else {
+                showError('emailError', 'emailErrorText', 'Server connection error. Please try again.');
+            }
+            shakeElement('emailInput');
+        } finally {
+            sendBtn.disabled = false;
+            btnText.textContent = 'Request Verification Code';
+        }
+    });
+
+    // Step 2: Verify OTP
+    document.getElementById('otpForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const otpInputs = document.querySelectorAll('.otp-input');
+      const otp = Array.from(otpInputs).map(input => input.value).join('');
+      
+      if (otp.length !== 6) {
+        showError('otpError', 'otpErrorText', 'Please enter complete 6-digit verification code');
+        shakeElement(otpInputs[0]);
+        return;
+      }
+
+      const verifyBtn = document.getElementById('verifyOtpBtn');
+      const btnText = document.getElementById('verifyOtpText');
+
+      verifyBtn.disabled = true;
+      btnText.innerHTML = '<div class="spinner"></div> Verifying...';
+
+      try {
+        const response = await fetch('http://localhost:3000/api/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: verifiedEmail, otp })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          hideError('otpError');
+          
+          // Store session
+          sessionStorage.setItem('adminAuth', 'true');
+          sessionStorage.setItem('adminEmail', verifiedEmail);
+          sessionStorage.setItem('adminToken', result.token);
+
+          // Show success and redirect
+          showStep('successStep');
+          setTimeout(() => {
+            window.location.href = 'dashboard.html';
+          }, 2000);
+        } else {
+          showError('otpError', 'otpErrorText', result.message || 'Invalid verification code. Please try again.');
+          otpInputs.forEach(input => {
+            input.value = '';
+            input.classList.remove('filled');
+          });
+          otpInputs[0].focus();
+          shakeElement(otpInputs[0]);
+        }
+        } catch (error) {
+            console.error('Verify OTP error:', error);
+            showError('otpError', 'otpErrorText', 'Server connection issue. Please check if the server is running.');
+            shakeElement(otpInputs[0]);
+        } finally {
+            verifyBtn.disabled = false;
+            btnText.textContent = 'Verify & Access Dashboard';
+        }
+    });
+
+    // OTP Input Handling
+    const otpInputs = document.querySelectorAll('.otp-input');
+    
+    otpInputs.forEach((input, index) => {
+      input.addEventListener('input', (e) => {
+        const value = e.target.value;
+        
+        // Only allow numbers
+        if (!/^\d*$/.test(value)) {
+          e.target.value = '';
+          return;
+        }
+
+        // Add filled class
+        if (value) {
+          e.target.classList.add('filled');
+        } else {
+          e.target.classList.remove('filled');
+        }
+
+        // Auto-focus next input
+        if (value && index < otpInputs.length - 1) {
+          otpInputs[index + 1].focus();
+        }
+      });
+
+      input.addEventListener('keydown', (e) => {
+        // Backspace handling
+        if (e.key === 'Backspace' && !input.value && index > 0) {
+          otpInputs[index - 1].focus();
+        }
+
+        // Arrow key navigation
+        if (e.key === 'ArrowLeft' && index > 0) {
+          otpInputs[index - 1].focus();
+        }
+        if (e.key === 'ArrowRight' && index < otpInputs.length - 1) {
+          otpInputs[index + 1].focus();
+        }
+      });
+
+      // Paste handling
+      input.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+        
+        pastedData.split('').forEach((char, i) => {
+          if (otpInputs[i]) {
+            otpInputs[i].value = char;
+            otpInputs[i].classList.add('filled');
+          }
+        });
+
+        if (pastedData.length > 0) {
+          otpInputs[Math.min(pastedData.length, otpInputs.length - 1)].focus();
+        }
+      });
+    });
+
+    // Resend OTP
+    async function resendOTP() {
+      const resendBtn = document.getElementById('resendBtn');
+      const resendText = document.getElementById('resendText');
+
+      try {
+        const response = await fetch('http://localhost:3000/api/send-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: verifiedEmail })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          hideError('otpError');
+          // Clear OTP inputs
+          otpInputs.forEach(input => {
+            input.value = '';
+            input.classList.remove('filled');
+          });
+          otpInputs[0].focus();
+          startResendTimer();
+          
+          // Show success message
+          const otpErrorDiv = document.getElementById('otpError');
+          const otpErrorText = document.getElementById('otpErrorText');
+          otpErrorText.textContent = 'New verification code sent successfully!';
+          otpErrorDiv.classList.remove('hidden');
+          otpErrorDiv.classList.remove('bg-red-50', 'border-red-200', 'text-red-700');
+          otpErrorDiv.classList.add('bg-green-50', 'border-green-200', 'text-green-700');
+          setTimeout(() => {
+            hideError('otpError');
+            otpErrorDiv.classList.remove('bg-green-50', 'border-green-200', 'text-green-700');
+            otpErrorDiv.classList.add('bg-red-50', 'border-red-200', 'text-red-700');
+          }, 3000);
+        } else {
+          showError('otpError', 'otpErrorText', 'Failed to resend verification code. Please try again.');
+        }
+      } catch (error) {
+        console.error('Resend OTP error:', error);
+        showError('otpError', 'otpErrorText', 'Connection error. Please try again.');
+      }
+    }
+
+    // Resend Timer
+    function startResendTimer() {
+      resendCountdown = 60;
+      const resendBtn = document.getElementById('resendBtn');
+      const resendText = document.getElementById('resendText');
+      
+      resendBtn.disabled = true;
+      
+      resendTimer = setInterval(() => {
+        resendCountdown--;
+        resendText.textContent = `Resend Code (${resendCountdown}s)`;
+        
+        if (resendCountdown <= 0) {
+          clearInterval(resendTimer);
+          resendBtn.disabled = false;
+          resendText.textContent = 'Resend Code';
+        }
+      }, 1000);
+    }
+
+    // Navigation Functions
+    function backToEmail() {
+      showStep('emailStep');
+      verifiedEmail = null;
+      document.getElementById('emailInput').value = '';
+      otpInputs.forEach(input => {
+        input.value = '';
+        input.classList.remove('filled');
+      });
+      hideError('otpError');
+      if (resendTimer) clearInterval(resendTimer);
+    }
+
+    function showStep(stepId) {
+      document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
+      document.getElementById(stepId).classList.add('active');
+    }
+
+    // Helper Functions
+    function isValidEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    function showError(errorDivId, errorTextId, message) {
+      const errorDiv = document.getElementById(errorDivId);
+      const errorText = document.getElementById(errorTextId);
+      errorText.textContent = message;
+      errorDiv.classList.remove('hidden');
+    }
+
+    function hideError(errorDivId) {
+      document.getElementById(errorDivId).classList.add('hidden');
+    }
+
+    function shakeElement(element) {
+      if (typeof element === 'string') {
+        element = document.getElementById(element);
+      }
+      if (element && element.classList) {
+        element.classList.add('shake');
+        setTimeout(() => element.classList.remove('shake'), 500);
+      }
+    }
+  </script>
+</body>
+</html>

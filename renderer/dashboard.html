@@ -1,0 +1,3500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zaf's Kitchen - Admin Dashboard</title>
+  <link rel="icon" type="image/png" href="logo/logo-border.png">
+
+  <!-- Google Fonts - Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <!-- SheetJS for Excel Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <!-- jsPDF for PDF Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+  <style>
+    * {
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+    @keyframes slideInLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes countUp {
+      from { opacity: 0; transform: scale(0.5); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .sidebar {
+      width: 5.5rem;
+      background-color: #DC2626;
+      transition: all 0.3s ease;
+    }
+    .sidebar:hover { width: 16rem; }
+    .nav-text {
+      opacity: 0;
+      transform: translateX(-10px);
+      transition: all 0.3s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .sidebar:hover .nav-text {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+    main {
+      margin-left: 5.5rem;
+      transition: margin-left 0.3s ease;
+    }
+    .sidebar:hover ~ main {
+      margin-left: 16rem;
+    }
+    .active-item {
+      background-color: #B91C1C;
+    }
+    .chart-container {
+      background: white;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      height: 380px;
+      animation: slideInUp 0.6s ease-out;
+    }
+    
+    .stat-card {
+      animation: slideInUp 0.5s ease-out;
+      animation-fill-mode: both;
+    }
+
+    .stat-card:nth-child(1) { animation-delay: 0.1s; }
+    .stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .stat-card:nth-child(3) { animation-delay: 0.3s; }
+    .stat-card:nth-child(4) { animation-delay: 0.4s; }
+    .stat-card:nth-child(5) { animation-delay: 0.5s; }
+
+    .stat-number {
+      animation: countUp 0.6s ease-out;
+      animation-fill-mode: both;
+    }
+
+    .chart-container canvas {
+      max-height: 280px !important;
+    }
+
+    .page {
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    .recent-booking-item {
+      animation: slideInLeft 0.4s ease-out;
+      animation-fill-mode: both;
+    }
+
+    .recent-booking-item:nth-child(1) { animation-delay: 0.1s; }
+    .recent-booking-item:nth-child(2) { animation-delay: 0.2s; }
+    .recent-booking-item:nth-child(3) { animation-delay: 0.3s; }
+    .recent-booking-item:nth-child(4) { animation-delay: 0.4s; }
+    .recent-booking-item:nth-child(5) { animation-delay: 0.5s; }
+
+    .event-card {
+      transition: all 0.3s ease;
+      border-left: 4px solid #10B981;
+    }
+    
+    .event-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    .rating-stars {
+      color: #FBBF24;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 flex min-h-screen" style="font-family: 'Poppins', sans-serif;">
+
+<!-- Sidebar -->
+<nav class="sidebar text-white flex flex-col justify-between fixed top-0 left-0 z-20 h-full shadow-lg">
+    <div>
+        <div class="flex items-center gap-3 px-5 py-5 border-b border-red-500">
+            <img src="logo/logo-border.png" alt="Zaf's Kitchen Logo" class="h-14 w-auto">
+            <span class="font-semibold text-xl nav-text">Zaf's Kitchen</span>
+        </div>
+
+      <ul class="mt-6 space-y-2">
+        <li class="nav-item flex items-center gap-4 px-5 py-3 cursor-pointer rounded-r-full hover:bg-red-700 transition-all duration-300 active-item" data-page="dashboard">
+          <i class="fas fa-home text-2xl"></i>
+          <span class="nav-text text-base font-medium">Dashboard</span>
+        </li>
+
+        <li class="nav-item flex items-center gap-4 px-5 py-3 cursor-pointer rounded-r-full hover:bg-red-700 transition-all duration-300" data-page="bookings">
+          <i class="fas fa-calendar-check text-2xl"></i>
+          <span class="nav-text text-base font-medium">Book Schedule</span>
+        </li>
+
+        <li class="nav-item flex items-center gap-4 px-5 py-3 cursor-pointer rounded-r-full hover:bg-red-700 transition-all duration-300" data-page="completed">
+          <i class="fas fa-check-circle text-2xl"></i>
+          <span class="nav-text text-base font-medium">Completed Events</span>
+        </li>
+
+        <li class="nav-item flex items-center gap-4 px-5 py-3 cursor-pointer rounded-r-full hover:bg-red-700 transition-all duration-300" data-page="staff">
+          <i class="fas fa-user-shield text-2xl"></i>
+          <span class="nav-text text-base font-medium">Staff Management</span>
+        </li>
+
+        <li class="nav-item flex items-center gap-4 px-5 py-3 cursor-pointer rounded-r-full hover:bg-red-700 transition-all duration-300" data-page="users">
+          <i class="fas fa-users text-2xl"></i>
+          <span class="nav-text text-base font-medium">User Management</span>
+        </li>
+
+        <li class="nav-item flex items-center gap-4 px-5 py-3 cursor-pointer rounded-r-full hover:bg-red-700 transition-all duration-300" data-page="export">
+          <i class="fas fa-file-export text-2xl"></i>
+          <span class="nav-text text-base font-medium">Export Data</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="border-t border-red-500 py-3">
+      <div class="nav-item flex items-center gap-4 px-5 py-3 cursor-pointer hover:bg-red-700 transition-all duration-300" onclick="logout()">
+        <i class="fas fa-sign-out-alt text-2xl"></i>
+        <span class="nav-text text-base font-medium">Logout</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main id="mainContent" class="flex-1 transition-all duration-300 p-8 overflow-y-auto">
+    
+    <!-- Dashboard -->
+    <section id="dashboard-page" class="page">
+      <div class="page-header mb-8 flex justify-between items-center flex-wrap gap-4">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-800">Dashboard Overview</h1>
+          <p class="text-gray-500">Welcome to Zaf's Kitchen Admin Panel</p>
+        </div>
+        <!-- REMOVED REFRESH BUTTON - Dashboard will auto-refresh -->
+      </div>
+
+      <!-- Main Statistics Cards - Row 1 -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div class="stat-card bg-white rounded-2xl shadow p-6 flex items-center gap-4 hover:shadow-lg transition-shadow">
+          <div class="bg-blue-100 text-blue-600 p-4 rounded-full text-3xl"><i class="fas fa-calendar-alt"></i></div>
+          <div>
+            <h3 id="totalCount" class="stat-number text-2xl font-bold">0</h3>
+            <p class="text-gray-500 text-sm">Total Bookings</p>
+          </div>
+        </div>
+        <div class="stat-card bg-white rounded-2xl shadow p-6 flex items-center gap-4 hover:shadow-lg transition-shadow">
+          <div class="bg-yellow-100 text-yellow-600 p-4 rounded-full text-3xl"><i class="fas fa-clock"></i></div>
+          <div>
+            <h3 id="pendingCount" class="stat-number text-2xl font-bold">0</h3>
+            <p class="text-gray-500 text-sm">Pending</p>
+          </div>
+        </div>
+        <div class="stat-card bg-white rounded-2xl shadow p-6 flex items-center gap-4 hover:shadow-lg transition-shadow">
+          <div class="bg-green-100 text-green-600 p-4 rounded-full text-3xl"><i class="fas fa-check-circle"></i></div>
+          <div>
+            <h3 id="approvedCount" class="stat-number text-2xl font-bold">0</h3>
+            <p class="text-gray-500 text-sm">Approved</p>
+          </div>
+        </div>
+        <div class="stat-card bg-white rounded-2xl shadow p-6 flex items-center gap-4 hover:shadow-lg transition-shadow">
+          <div class="bg-red-100 text-red-600 p-4 rounded-full text-3xl"><i class="fas fa-times-circle"></i></div>
+          <div>
+            <h3 id="rejectedCount" class="stat-number text-2xl font-bold">0</h3>
+            <p class="text-gray-500 text-sm">Rejected</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Second Row Statistics -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div class="stat-card bg-white rounded-2xl shadow p-6 flex items-center gap-4 hover:shadow-lg transition-shadow">
+          <div class="bg-purple-100 text-purple-600 p-4 rounded-full text-3xl"><i class="fas fa-money-bill-wave"></i></div>
+          <div>
+            <h3 id="totalRevenue" class="stat-number text-2xl font-bold">₱0</h3>
+            <p class="text-gray-500 text-sm">Total Revenue</p>
+          </div>
+        </div>
+        <div class="stat-card bg-white rounded-2xl shadow p-6 flex items-center gap-4 hover:shadow-lg transition-shadow">
+          <div class="bg-pink-100 text-pink-600 p-4 rounded-full text-3xl"><i class="fas fa-users"></i></div>
+          <div>
+            <h3 id="activeCustomers" class="stat-number text-2xl font-bold">0</h3>
+            <p class="text-gray-500 text-sm">Active Customers</p>
+          </div>
+        </div>
+        <div class="stat-card bg-white rounded-2xl shadow p-6 flex items-center gap-4 hover:shadow-lg transition-shadow">
+          <div class="bg-orange-100 text-orange-600 p-4 rounded-full text-3xl"><i class="fas fa-chart-line"></i></div>
+          <div>
+            <h3 id="monthlyRevenue" class="stat-number text-2xl font-bold">₱0</h3>
+            <p class="text-gray-500 text-sm">Monthly Revenue</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+
+                <!-- Booking Status Breakdown -->
+        <div class="chart-container">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">Booking Status Breakdown</h3>
+          <canvas id="statusChart"></canvas>
+        </div>
+
+        <!-- Top Packages -->
+        <div class="chart-container">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">Top 5 Booked Packages</h3>
+          <canvas id="packageChart"></canvas>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+
+                <!-- Bookings per Month Chart -->
+        <div class="chart-container">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">Bookings per Month</h3>
+          <canvas id="bookingsChart"></canvas>
+        </div>
+
+        <!-- Revenue per Month Chart -->
+        <div class="chart-container">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">Revenue per Month</h3>
+          <canvas id="revenueChart"></canvas>
+        </div>
+      </div>
+
+
+      <!-- Customer Growth Chart -->
+      <div class="chart-container mb-8" style="height: 320px;">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Customer Growth</h3>
+        <canvas id="customerChart"></canvas>
+      </div>
+
+      <!-- Recent Bookings Section -->
+      <div class="mt-8">
+        <div class="bg-white rounded-2xl shadow p-6" style="animation: slideInUp 0.6s ease-out;">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold text-gray-800">Recent Bookings</h2>
+            <button onclick="navItems[1].click()" class="text-red-600 hover:text-red-700 text-sm font-medium">
+              View All <i class="fas fa-arrow-right ml-1"></i>
+            </button>
+          </div>
+          <div id="recentBookings" class="space-y-3">
+            <div class="text-center py-8 text-gray-500">
+              <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+              <p>Loading recent bookings...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bookings -->
+    <section id="bookings-page" class="page hidden">
+      <div class="page-header mb-8 flex justify-between items-center flex-wrap gap-4">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-800">Book Schedule</h1>
+          <p class="text-gray-500">Manage customer booking requests</p>
+        </div>
+        <button onclick="loadBookings()" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg flex items-center gap-2">
+          <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+      </div>
+
+      <!-- Search and Filter -->
+      <div class="bg-white rounded-2xl shadow p-6 mb-6">
+        <div class="flex gap-4 flex-wrap">
+          <div class="flex-1 min-w-[250px]">
+            <div class="relative">
+              <input 
+                type="text" 
+                id="searchInput" 
+                placeholder="Search by name, contact, or event type..."
+                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                oninput="filterBookings()"
+              />
+              <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+            </div>
+          </div>
+          <div class="min-w-[200px]">
+            <select 
+              id="statusFilter" 
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              onchange="filterBookings()"
+            >
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+          <div class="min-w-[200px]">
+            <select 
+              id="paymentFilter" 
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              onchange="filterBookings()"
+            >
+              <option value="all">All Payments</option>
+              <option value="paid">Paid</option>
+              <option value="unpaid">Unpaid</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bookings Table - UPDATED: TINANGGAL ANG LOCATION COLUMN -->
+      <div class="bg-white rounded-2xl shadow overflow-x-auto">
+        <table class="w-full text-left text-sm text-gray-600">
+          <thead class="bg-red-600 text-white text-sm uppercase">
+            <tr>
+              <th class="px-6 py-3">Name</th>
+              <th class="px-6 py-3">Contact</th>
+              <th class="px-6 py-3">Event</th>
+              <th class="px-6 py-3">Date</th>
+              <th class="px-6 py-3">Time</th>
+              <th class="px-6 py-3">Status</th>
+              <th class="px-6 py-3">Payment</th>
+              <th class="px-6 py-3 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody id="bookingsTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Completed Events Page -->
+    <section id="completed-page" class="page hidden">
+      <div class="page-header mb-8 flex justify-between items-center flex-wrap gap-4">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-800">Completed Events</h1>
+          <p class="text-gray-500">View successfully completed catering events</p>
+        </div>
+        <div class="flex gap-3">
+          <button onclick="exportCompletedToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg flex items-center gap-2">
+            <i class="fas fa-file-excel"></i> Export Excel
+          </button>
+          <button onclick="exportCompletedToPDF()" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg flex items-center gap-2">
+            <i class="fas fa-file-pdf"></i> Export PDF
+          </button>
+          <button onclick="loadCompletedEvents()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg flex items-center gap-2">
+            <i class="fas fa-sync-alt"></i> Refresh
+          </button>
+        </div>
+      </div>
+
+      <!-- Completed Events Statistics - UPDATED: TANGGAL ANG TOTAL GUESTS SERVED -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+        <div class="stat-card bg-white rounded-2xl shadow p-6 flex items-center gap-4 hover:shadow-lg transition-shadow">
+          <div class="bg-green-100 text-green-600 p-4 rounded-full text-3xl"><i class="fas fa-check-circle"></i></div>
+          <div>
+            <h3 id="totalCompleted" class="stat-number text-2xl font-bold">0</h3>
+            <p class="text-gray-500 text-sm">Total Completed</p>
+          </div>
+        </div>
+        <div class="stat-card bg-white rounded-2xl shadow p-6 flex items-center gap-4 hover:shadow-lg transition-shadow">
+          <div class="bg-blue-100 text-blue-600 p-4 rounded-full text-3xl"><i class="fas fa-money-bill-wave"></i></div>
+          <div>
+            <h3 id="completedRevenue" class="stat-number text-2xl font-bold">₱0</h3>
+            <p class="text-gray-500 text-sm">Total Revenue</p>
+          </div>
+        </div>
+        <div class="stat-card bg-white rounded-2xl shadow p-6 flex items-center gap-4 hover:shadow-lg transition-shadow">
+          <div class="bg-orange-100 text-orange-600 p-4 rounded-full text-3xl"><i class="fas fa-star"></i></div>
+          <div>
+            <h3 id="avgRating" class="stat-number text-2xl font-bold">0.0</h3>
+            <p class="text-gray-500 text-sm">Average Rating</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search and Filter for Completed Events -->
+      <div class="bg-white rounded-2xl shadow p-6 mb-6">
+        <div class="flex gap-4 flex-wrap">
+          <div class="flex-1 min-w-[250px]">
+            <div class="relative">
+              <input 
+                type="text" 
+                id="completedSearchInput" 
+                placeholder="Search completed events..."
+                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                oninput="filterCompletedEvents()"
+              />
+              <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+            </div>
+          </div>
+          <div class="min-w-[200px]">
+            <select 
+              id="eventTypeFilter" 
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              onchange="filterCompletedEvents()"
+            >
+              <option value="all">All Event Types</option>
+              <option value="birthday">Birthday</option>
+              <option value="wedding">Wedding</option>
+              <option value="debut">Debut</option>
+              <option value="corporate">Corporate</option>
+            </select>
+          </div>
+          <div class="min-w-[200px]">
+            <select 
+              id="ratingFilter" 
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              onchange="filterCompletedEvents()"
+            >
+              <option value="all">All Ratings</option>
+              <option value="5">5 Stars</option>
+              <option value="4">4 Stars & Above</option>
+              <option value="3">3 Stars & Above</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Completed Events Grid -->
+      <div id="completedEventsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="text-center py-12 text-gray-500 col-span-3">
+          <i class="fas fa-spinner fa-spin text-3xl mb-4"></i>
+          <p class="text-lg">Loading completed events...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Staff Management Page -->
+    <section id="staff-page" class="page hidden">
+      <div class="page-header mb-8 flex justify-between items-center flex-wrap gap-4">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-800">Staff Management</h1>
+          <p class="text-gray-500">Manage staff accounts and permissions</p>
+        </div>
+        <button onclick="loadStaff()" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg flex items-center gap-2">
+          <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+      </div>
+
+      <!-- Staff Statistics Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div class="stat-card bg-white rounded-2xl shadow p-6 flex items-center gap-4 hover:shadow-lg transition-shadow">
+          <div class="bg-blue-100 text-blue-600 p-4 rounded-full text-3xl"><i class="fas fa-users"></i></div>
+          <div>
+            <h3 id="totalStaff" class="stat-number text-2xl font-bold">0</h3>
+            <p class="text-gray-500 text-sm">Total Staff</p>
+          </div>
+        </div>
+        <div class="stat-card bg-white rounded-2xl shadow p-6 flex items-center gap-4 hover:shadow-lg transition-shadow">
+          <div class="bg-yellow-100 text-yellow-600 p-4 rounded-full text-3xl"><i class="fas fa-clock"></i></div>
+          <div>
+            <h3 id="pendingStaff" class="stat-number text-2xl font-bold">0</h3>
+            <p class="text-gray-500 text-sm">Pending Approval</p>
+          </div>
+        </div>
+        <div class="stat-card bg-white rounded-2xl shadow p-6 flex items-center gap-4 hover:shadow-lg transition-shadow">
+          <div class="bg-green-100 text-green-600 p-4 rounded-full text-3xl"><i class="fas fa-check-circle"></i></div>
+          <div>
+            <h3 id="approvedStaff" class="stat-number text-2xl font-bold">0</h3>
+            <p class="text-gray-500 text-sm">Approved</p>
+          </div>
+        </div>
+        <div class="stat-card bg-white rounded-2xl shadow p-6 flex items-center gap-4 hover:shadow-lg transition-shadow">
+          <div class="bg-red-100 text-red-600 p-4 rounded-full text-3xl"><i class="fas fa-times-circle"></i></div>
+          <div>
+            <h3 id="rejectedStaff" class="stat-number text-2xl font-bold">0</h3>
+            <p class="text-gray-500 text-sm">Rejected</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search and Filter for Staff -->
+      <div class="bg-white rounded-2xl shadow p-6 mb-6">
+        <div class="flex gap-4 flex-wrap">
+          <div class="flex-1 min-w-[250px]">
+            <div class="relative">
+              <input 
+                type="text" 
+                id="staffSearchInput" 
+                placeholder="Search by name or email..."
+                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                oninput="filterStaff()"
+              />
+              <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+            </div>
+          </div>
+          <div class="min-w-[200px]">
+            <select 
+              id="staffStatusFilter" 
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              onchange="filterStaff()"
+            >
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Staff Table -->
+      <div class="bg-white rounded-2xl shadow overflow-x-auto">
+        <table class="w-full text-left text-sm text-gray-600">
+          <thead class="bg-red-600 text-white text-sm uppercase">
+            <tr>
+              <th class="px-6 py-3">Staff Member</th>
+              <th class="px-6 py-3">Email</th>
+              <th class="px-6 py-3">Role</th>
+              <th class="px-6 py-3">Status</th>
+              <th class="px-6 py-3">Join Date</th>
+              <th class="px-6 py-3 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody id="staffTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Export Data Page -->
+    <section id="export-page" class="page hidden">
+      <div class="page-header mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">Export Data</h1>
+        <p class="text-gray-500">Export booking data to various formats</p>
+      </div>
+
+      <!-- Export Options -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Export All Bookings -->
+        <div class="bg-white rounded-2xl shadow p-6 hover:shadow-lg transition-shadow">
+          <div class="text-center">
+            <div class="bg-blue-100 text-blue-600 p-4 rounded-full text-3xl w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <i class="fas fa-database"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">All Bookings</h3>
+            <p class="text-gray-500 text-sm mb-4">Export all booking records with complete details</p>
+            <div class="flex flex-col gap-2">
+              <button onclick="exportAllToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                <i class="fas fa-file-excel"></i> Excel (.xlsx)
+              </button>
+              <button onclick="exportAllToPDF()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                <i class="fas fa-file-pdf"></i> PDF (.pdf)
+              </button>
+              <button onclick="exportAllToCSV()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                <i class="fas fa-file-csv"></i> CSV (.csv)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Export Completed Events -->
+        <div class="bg-white rounded-2xl shadow p-6 hover:shadow-lg transition-shadow">
+          <div class="text-center">
+            <div class="bg-green-100 text-green-600 p-4 rounded-full text-3xl w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Completed Events</h3>
+            <p class="text-gray-500 text-sm mb-4">Export successfully completed events with ratings</p>
+            <div class="flex flex-col gap-2">
+              <button onclick="exportCompletedToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                <i class="fas fa-file-excel"></i> Excel (.xlsx)
+              </button>
+              <button onclick="exportCompletedToPDF()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                <i class="fas fa-file-pdf"></i> PDF (.pdf)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Export by Date Range -->
+        <div class="bg-white rounded-2xl shadow p-6 hover:shadow-lg transition-shadow">
+          <div class="text-center">
+            <div class="bg-purple-100 text-purple-600 p-4 rounded-full text-3xl w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <i class="fas fa-calendar-alt"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Date Range Export</h3>
+            <p class="text-gray-500 text-sm mb-4">Export bookings within specific date range</p>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 text-left mb-1">From Date</label>
+                <input type="date" id="exportFromDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 text-left mb-1">To Date</label>
+                <input type="date" id="exportToDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+              </div>
+              <button onclick="exportByDateRange()" class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                <i class="fas fa-download"></i> Export Range
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Stats - UPDATED: TANGGAL ANG ACTIVE USERS -->
+      <div class="bg-white rounded-2xl shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Export Statistics</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="text-center p-4 bg-blue-50 rounded-lg">
+            <p class="text-2xl font-bold text-blue-600" id="exportTotalBookings">0</p>
+            <p class="text-sm text-gray-600">Total Bookings</p>
+          </div>
+          <div class="text-center p-4 bg-green-50 rounded-lg">
+            <p class="text-2xl font-bold text-green-600" id="exportCompletedEvents">0</p>
+            <p class="text-sm text-gray-600">Completed Events</p>
+          </div>
+          <div class="text-center p-4 bg-purple-50 rounded-lg">
+            <p class="text-2xl font-bold text-purple-600" id="exportTotalRevenue">₱0</p>
+            <p class="text-sm text-gray-600">Total Revenue</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- User Management - UPDATED: TANGGAL ANG BLOCKED AT INACTIVE -->
+    <section id="users-page" class="page hidden">
+      <div class="page-header mb-8 flex justify-between items-center flex-wrap gap-4">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-800">User Management</h1>
+          <p class="text-gray-500">Manage registered users and their account status</p>
+        </div>
+        <button onclick="loadUsers()" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg flex items-center gap-2">
+          <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+      </div>
+
+      <!-- User Statistics Cards - UPDATED: TANGGAL ANG BLOCKED AT INACTIVE -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+        <div class="stat-card bg-white rounded-2xl shadow p-6 flex items-center gap-4 hover:shadow-lg transition-shadow">
+          <div class="bg-blue-100 text-blue-600 p-4 rounded-full text-3xl"><i class="fas fa-users"></i></div>
+          <div>
+            <h3 id="totalUsers" class="stat-number text-2xl font-bold">0</h3>
+            <p class="text-gray-500 text-sm">Total Users</p>
+          </div>
+        </div>
+        <div class="stat-card bg-white rounded-2xl shadow p-6 flex items-center gap-4 hover:shadow-lg transition-shadow">
+          <div class="bg-green-100 text-green-600 p-4 rounded-full text-3xl"><i class="fas fa-user-check"></i></div>
+          <div>
+            <h3 id="activeUsers" class="stat-number text-2xl font-bold">0</h3>
+            <p class="text-gray-500 text-sm">Active Users</p>
+          </div>
+        </div>
+        <div class="stat-card bg-white rounded-2xl shadow p-6 flex items-center gap-4 hover:shadow-lg transition-shadow">
+          <div class="bg-gray-100 text-gray-600 p-4 rounded-full text-3xl"><i class="fas fa-user-times"></i></div>
+          <div>
+            <h3 id="inactiveUsers" class="stat-number text-2xl font-bold">0</h3>
+            <p class="text-gray-500 text-sm">Inactive Users</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search Users -->
+      <div class="bg-white rounded-2xl shadow p-6 mb-6">
+        <div class="flex gap-4 flex-wrap">
+          <div class="flex-1 min-w-[250px]">
+            <div class="relative">
+              <input 
+                type="text" 
+                id="userSearchInput" 
+                placeholder="Search by name or email..."
+                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                oninput="filterUsers()"
+              />
+              <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+            </div>
+          </div>
+          <div class="min-w-[200px]">
+            <select 
+              id="userStatusFilter" 
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              onchange="filterUsers()"
+            >
+              <option value="all">All Users</option>
+              <option value="active">Active Users</option>
+              <option value="inactive">Inactive Users</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Users Table -->
+      <div class="bg-white rounded-2xl shadow overflow-x-auto">
+        <table class="w-full text-left text-sm text-gray-600">
+          <thead class="bg-red-600 text-white text-sm uppercase">
+            <tr>
+              <th class="px-6 py-3">User</th>
+              <th class="px-6 py-3">Email</th>
+              <th class="px-6 py-3">Status</th>
+              <th class="px-6 py-3">Bookings</th>
+              <th class="px-6 py-3">Joined Date</th>
+              <th class="px-6 py-3 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody id="usersTable"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Booking Details Modal -->
+  <div id="detailsModal" class="fixed inset-0 hidden bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h2 class="text-xl font-bold text-gray-800">Booking Details</h2>
+        <button onclick="closeModal()" class="text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+      </div>
+      <div id="modalContent" class="text-gray-700 space-y-3"></div>
+      <div id="modalActions" class="mt-6 flex gap-3 justify-end border-t pt-4"></div>
+    </div>
+  </div>
+
+  <!-- Complete Event Modal - UPDATED: TANGGAL ANG FEEDBACK INPUT -->
+  <div id="completeModal" class="fixed inset-0 hidden bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h2 class="text-xl font-bold text-gray-800">Complete Event</h2>
+        <button onclick="closeCompleteModal()" class="text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+      </div>
+      
+      <div class="mb-6">
+        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div class="flex items-center gap-3">
+            <i class="fas fa-check-circle text-green-600 text-xl"></i>
+            <div>
+              <h3 class="font-semibold text-green-800">Mark Event as Completed</h3>
+              <p class="text-green-600 text-sm mt-1">This will mark the event as successfully completed.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-3 justify-end">
+        <button 
+          type="button" 
+          onclick="closeCompleteModal()" 
+          class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors"
+        >
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          onclick="completeEventWithoutFeedback()" 
+          class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2"
+        >
+          <i class="fas fa-check"></i>
+          Mark as Complete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Details Modal -->
+  <div id="userDetailsModal" class="fixed inset-0 hidden bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h2 class="text-xl font-bold text-gray-800">User Details</h2>
+        <button onclick="closeUserModal()" class="text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+      </div>
+      <div id="userModalContent" class="text-gray-700 space-y-3"></div>
+      <div id="userModalActions" class="mt-6 flex gap-3 justify-end border-t pt-4"></div>
+    </div>
+  </div>
+
+  <!-- Staff Details Modal -->
+  <div id="staffDetailsModal" class="fixed inset-0 hidden bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h2 class="text-xl font-bold text-gray-800">Staff Details</h2>
+        <button onclick="closeStaffModal()" class="text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+      </div>
+      <div id="staffModalContent" class="text-gray-700 space-y-3"></div>
+      <div id="staffModalActions" class="mt-6 flex gap-3 justify-end border-t pt-4"></div>
+    </div>
+  </div>
+
+  <!-- Rejection Reason Modal -->
+  <div id="rejectionModal" class="fixed inset-0 hidden bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h2 class="text-xl font-bold text-gray-800">Reject Booking</h2>
+        <button onclick="closeRejectionModal()" class="text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+      </div>
+      
+      <form id="rejectionForm">
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Reason for Rejection <span class="text-red-500">*</span>
+          </label>
+          <textarea 
+            id="rejectionReason" 
+            rows="4" 
+            required
+            placeholder="Please provide a detailed reason for rejecting this booking..."
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+          ></textarea>
+          <p class="text-xs text-gray-500 mt-1">This reason will be sent to the customer.</p>
+        </div>
+
+        <div class="flex gap-3 justify-end">
+          <button 
+            type="button" 
+            onclick="closeRejectionModal()" 
+            class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors"
+          >
+            Cancel
+          </button>
+          <button 
+            type="submit" 
+            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2"
+          >
+            <i class="fas fa-times"></i>
+            Reject Booking
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Staff Rejection Modal -->
+  <div id="staffRejectionModal" class="fixed inset-0 hidden bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h2 class="text-xl font-bold text-gray-800">Reject Staff Account</h2>
+        <button onclick="closeStaffRejectionModal()" class="text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+      </div>
+      
+      <form id="staffRejectionForm">
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Reason for Rejection <span class="text-red-500">*</span>
+          </label>
+          <textarea 
+            id="staffRejectionReason" 
+            rows="4" 
+            required
+            placeholder="Please provide a detailed reason for rejecting this staff account..."
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+          ></textarea>
+          <p class="text-xs text-gray-500 mt-1">This reason will be sent to the staff member.</p>
+        </div>
+
+        <div class="flex gap-3 justify-end">
+          <button 
+            type="button" 
+            onclick="closeStaffRejectionModal()" 
+            class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors"
+          >
+            Cancel
+          </button>
+          <button 
+            type="submit" 
+            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2"
+          >
+            <i class="fas fa-times"></i>
+            Reject Account
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Feedback Modal -->
+  <div id="feedbackModal" class="fixed inset-0 hidden bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h2 class="text-xl font-bold text-gray-800">Customer Feedback</h2>
+        <button onclick="closeFeedbackModal()" class="text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+      </div>
+      <div id="feedbackContent" class="text-gray-700">
+        <p class="text-lg whitespace-pre-wrap" id="fullFeedbackText"></p>
+      </div>
+      <div class="mt-6 flex justify-end border-t pt-4">
+        <button 
+          onclick="closeFeedbackModal()" 
+          class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allBookings = [];
+    let filteredBookings = [];
+    let allUsers = [];
+    let filteredUsers = [];
+    let allStaff = [];
+    let filteredStaff = [];
+    let completedEvents = [];
+    let filteredCompletedEvents = [];
+    let currentBookingId = null;
+    let currentUserId = null;
+    let currentStaffId = null;
+    let charts = {};
+    let dashboardRefreshInterval = null;
+
+    // Package mapping for display names
+    const packageNames = {
+      'silver': 'Silver Package (Birthday)',
+      'gold': 'Gold Package (Birthday)',
+      'platinum': 'Platinum Package (Birthday)',
+      'diamond': 'Diamond Package (Birthday)',
+      'basic_wedding': 'Basic Wedding Package',
+      'premium_wedding': 'Premium Wedding Package',
+      'silver_debut': 'Silver Debut Package',
+      'gold_debut': 'Gold Debut Package',
+      'platinum_debut': 'Platinum Debut Package',
+      'silver_corporate': 'Silver Corporate Package',
+      'gold_corporate': 'Gold Corporate Package',
+      'platinum_corporate': 'Platinum Corporate Package'
+    };
+
+    // Format time helper function
+    function formatTime(time) {
+      if (!time) return 'N/A';
+      
+      if (typeof time === 'string' && time.includes(':')) {
+        const [hours, minutes] = time.split(':');
+        let hour = parseInt(hours);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        hour = hour % 12 || 12;
+        return `${hour}:${minutes} ${ampm}`;
+      }
+      
+      return time;
+    }
+
+    // Format currency
+    function formatCurrency(amount) {
+      return '₱' + parseFloat(amount || 0).toLocaleString('en-PH', { 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+      });
+    }
+
+    // Navigation
+    const navItems = document.querySelectorAll('.nav-item');
+    const pages = document.querySelectorAll('.page');
+
+    navItems.forEach(item => {
+      item.addEventListener('click', () => {
+        navItems.forEach(i => i.classList.remove('active-item'));
+        item.classList.add('active-item');
+        const target = item.getAttribute('data-page');
+        pages.forEach(p => p.classList.add('hidden'));
+        document.getElementById(`${target}-page`).classList.remove('hidden');
+        
+        if (target === 'bookings') {
+          loadBookings();
+        } else if (target === 'dashboard') {
+          startDashboardAutoRefresh();
+        } else if (target === 'users') {
+          loadUsers();
+        } else if (target === 'staff') {
+          loadStaff();
+        } else if (target === 'completed') {
+          loadCompletedEvents();
+        } else if (target === 'export') {
+          loadExportStats();
+        }
+      });
+    });
+
+    // ==================== DASHBOARD FUNCTIONS ====================
+
+    // Start Dashboard Auto-Refresh - NEW FUNCTION
+    function startDashboardAutoRefresh() {
+      // Clear any existing interval
+      if (dashboardRefreshInterval) {
+        clearInterval(dashboardRefreshInterval);
+      }
+      
+      // Initial load
+      refreshDashboard();
+      
+      // Set up auto-refresh every 10 seconds
+      dashboardRefreshInterval = setInterval(() => {
+        refreshDashboard();
+      }, 10000); // 10 seconds
+    }
+
+    // Stop Dashboard Auto-Refresh - NEW FUNCTION
+    function stopDashboardAutoRefresh() {
+      if (dashboardRefreshInterval) {
+        clearInterval(dashboardRefreshInterval);
+        dashboardRefreshInterval = null;
+      }
+    }
+
+    // Refresh Dashboard - UPDATED: No manual refresh button needed
+    async function refreshDashboard() {
+      await loadDashboardStats();
+      await loadCharts();
+    }
+
+    // Load Dashboard Stats
+    async function loadDashboardStats() {
+      try {
+        const result = await window.api.getBookings();
+        if (!result.success) throw new Error(result.error);
+        
+        const bookings = result.data;
+        const pending = bookings.filter(b => b.booking_status === 'pending').length;
+        const approved = bookings.filter(b => b.booking_status === 'approved').length;
+        const rejected = bookings.filter(b => b.booking_status === 'rejected').length;
+        const completed = bookings.filter(b => b.booking_status === 'completed').length;
+        
+        // Calculate revenue - UPDATED: Use total_price instead of package_price
+        const totalRevenue = bookings
+          .filter(b => b.payment_status === 'paid')
+          .reduce((sum, b) => sum + parseFloat(b.total_price || b.package_price || 0), 0);
+        
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+        const monthlyRevenue = bookings
+          .filter(b => {
+            if (b.payment_status !== 'paid') return false;
+            const bookingDate = new Date(b.event_date || b.created_at);
+            return bookingDate.getMonth() === currentMonth && bookingDate.getFullYear() === currentYear;
+          })
+          .reduce((sum, b) => sum + parseFloat(b.total_price || b.package_price || 0), 0);
+
+        // Get unique customers
+        const uniqueCustomers = [...new Set(bookings.map(b => b.user_id).filter(id => id))].length;
+
+        // Update stats with animation
+        animateValue('pendingCount', 0, pending, 800);
+        animateValue('approvedCount', 0, approved, 800);
+        animateValue('rejectedCount', 0, rejected, 800);
+        animateValue('totalCount', 0, bookings.length, 800);
+        animateValue('activeCustomers', 0, uniqueCustomers, 800);
+        
+        document.getElementById('totalRevenue').textContent = formatCurrency(totalRevenue);
+        document.getElementById('monthlyRevenue').textContent = formatCurrency(monthlyRevenue);
+
+        // Load recent bookings
+        const recentContainer = document.getElementById('recentBookings');
+        const recentBookings = bookings.slice(0, 5);
+        
+        if (recentBookings.length === 0) {
+          recentContainer.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+              <i class="fas fa-calendar-times text-2xl mb-2"></i>
+              <p>No bookings yet</p>
+            </div>
+          `;
+        } else {
+          recentContainer.innerHTML = recentBookings.map((b, index) => {
+            const avatarUrl = b.avatar_url;
+            const userName = b.full_name || 'N/A';
+            const initials = userName.charAt(0).toUpperCase();
+            
+            return `
+              <div class="recent-booking-item flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer" onclick="navItems[1].click(); setTimeout(() => viewBooking('${b.id}'), 300);" style="animation-delay: ${index * 0.1}s;">
+                <div class="flex-1">
+                  <div class="flex items-center gap-3">
+                    ${avatarUrl ? `
+                      <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center overflow-hidden">
+                        <img src="${avatarUrl}" alt="${userName}" class="w-full h-full object-cover">
+                      </div>
+                    ` : `
+                      <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-bold">
+                        ${initials}
+                      </div>
+                    `}
+                    <div>
+                      <h4 class="font-semibold text-gray-800">${userName}</h4>
+                      <p class="text-sm text-gray-500">${b.event_type || 'Event'} • ${b.guest_count || 0} guests</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm text-gray-600">${b.event_date ? new Date(b.event_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}</p>
+                  <p class="text-xs text-gray-500">${formatTime(b.start_time)}</p>
+                </div>
+                <div class="ml-4">
+                  <span class="px-3 py-1 rounded-full text-xs font-semibold ${
+                    b.booking_status === 'approved' ? 'bg-green-100 text-green-700' : 
+                    b.booking_status === 'rejected' ? 'bg-red-100 text-red-700' : 
+                    b.booking_status === 'completed' ? 'bg-blue-100 text-blue-700' :
+                    'bg-yellow-100 text-yellow-700'
+                  }">
+                    ${b.booking_status}
+                  </span>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      } catch (err) {
+        console.error('Error loading stats:', err);
+        document.getElementById('recentBookings').innerHTML = `
+          <div class="text-center py-8 text-red-500">
+            <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
+            <p>Error loading data</p>
+          </div>
+        `;
+      }
+    }
+
+    // Animate number counter
+    function animateValue(id, start, end, duration) {
+      const element = document.getElementById(id);
+      if (!element) return;
+      const range = end - start;
+      const increment = range / (duration / 16);
+      let current = start;
+      
+      const timer = setInterval(() => {
+        current += increment;
+        if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+          current = end;
+          clearInterval(timer);
+        }
+        element.textContent = Math.floor(current);
+      }, 16);
+    }
+
+    // Load Charts
+    async function loadCharts() {
+      try {
+        const result = await window.api.getBookings();
+        if (!result.success) throw new Error(result.error);
+        
+        const bookings = result.data;
+        await initializeCharts(bookings);
+      } catch (err) {
+        console.error('Error loading charts:', err);
+      }
+    }
+
+    // Initialize Charts
+    function initializeCharts(bookings) {
+      // Destroy existing charts
+      Object.values(charts).forEach(chart => {
+        if (chart) chart.destroy();
+      });
+
+      // Bookings per Month Chart
+      const bookingsByMonth = getBookingsByMonth(bookings);
+      const bookingsCtx = document.getElementById('bookingsChart').getContext('2d');
+      charts.bookingsChart = new Chart(bookingsCtx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(bookingsByMonth),
+          datasets: [{
+            label: 'Number of Bookings',
+            data: Object.values(bookingsByMonth),
+            backgroundColor: 'rgba(220, 38, 38, 0.7)',
+            borderColor: 'rgba(220, 38, 38, 1)',
+            borderWidth: 1,
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          animation: {
+            duration: 1500,
+            easing: 'easeInOutQuart'
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          }
+        }
+      });
+
+      // Revenue per Month Chart - UPDATED: Use total_price
+      const revenueByMonth = getRevenueByMonth(bookings);
+      const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+      charts.revenueChart = new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+          labels: Object.keys(revenueByMonth),
+          datasets: [{
+            label: 'Revenue (₱)',
+            data: Object.values(revenueByMonth),
+            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            borderColor: 'rgba(34, 197, 94, 1)',
+            borderWidth: 3,
+            tension: 0.4,
+            fill: true,
+            pointRadius: 5,
+            pointHoverRadius: 7
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          animation: {
+            duration: 1500,
+            easing: 'easeInOutQuart'
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return '₱' + value.toLocaleString();
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // Status Breakdown Chart
+      const statusCounts = getStatusCounts(bookings);
+      const statusCtx = document.getElementById('statusChart').getContext('2d');
+      charts.statusChart = new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Pending', 'Approved', 'Rejected', 'Completed'],
+          datasets: [{
+            data: [
+              statusCounts.pending,
+              statusCounts.approved,
+              statusCounts.rejected,
+              statusCounts.completed
+            ],
+            backgroundColor: [
+              'rgba(245, 158, 11, 0.8)',
+              'rgba(34, 197, 94, 0.8)',
+              'rgba(239, 68, 68, 0.8)',
+              'rgba(59, 130, 246, 0.8)'
+            ],
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          animation: {
+            duration: 1500,
+            easing: 'easeInOutQuart',
+            animateRotate: true,
+            animateScale: true
+          },
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+
+      // Top Packages Chart
+      const packageCounts = getPackageCounts(bookings);
+      const packageCtx = document.getElementById('packageChart').getContext('2d');
+      charts.packageChart = new Chart(packageCtx, {
+        type: 'bar',
+        data: {
+          labels: packageCounts.labels,
+          datasets: [{
+            label: 'Bookings',
+            data: packageCounts.data,
+            backgroundColor: [
+              'rgba(139, 92, 246, 0.7)',
+              'rgba(236, 72, 153, 0.7)',
+              'rgba(59, 130, 246, 0.7)',
+              'rgba(245, 158, 11, 0.7)',
+              'rgba(34, 197, 94, 0.7)'
+            ],
+            borderColor: [
+              'rgba(139, 92, 246, 1)',
+              'rgba(236, 72, 153, 1)',
+              'rgba(59, 130, 246, 1)',
+              'rgba(245, 158, 11, 1)',
+              'rgba(34, 197, 94, 1)'
+            ],
+            borderWidth: 1,
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          indexAxis: 'y',
+          animation: {
+            duration: 1500,
+            easing: 'easeInOutQuart'
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          }
+        }
+      });
+
+      // Customer Growth Chart
+      const customerGrowth = getCustomerGrowth(bookings);
+      const customerCtx = document.getElementById('customerChart').getContext('2d');
+      charts.customerChart = new Chart(customerCtx, {
+        type: 'line',
+        data: {
+          labels: Object.keys(customerGrowth),
+          datasets: [{
+            label: 'Total Customers',
+            data: Object.values(customerGrowth),
+            backgroundColor: 'rgba(236, 72, 153, 0.1)',
+            borderColor: 'rgba(236, 72, 153, 1)',
+            borderWidth: 3,
+            tension: 0.4,
+            fill: true,
+            pointRadius: 5,
+            pointHoverRadius: 7
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          animation: {
+            duration: 1500,
+            easing: 'easeInOutQuart'
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+    }
+
+    // Helper functions for chart data
+    function getBookingsByMonth(bookings) {
+      const months = {};
+      bookings.forEach(booking => {
+        const date = new Date(booking.event_date || booking.created_at);
+        const monthYear = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+        months[monthYear] = (months[monthYear] || 0) + 1;
+      });
+      return months;
+    }
+
+    function getRevenueByMonth(bookings) {
+      const revenue = {};
+      bookings
+        .filter(booking => booking.payment_status === 'paid')
+        .forEach(booking => {
+          const date = new Date(booking.event_date || booking.created_at);
+          const monthYear = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+          // UPDATED: Use total_price instead of package_price
+          const amount = parseFloat(booking.total_price || booking.package_price || 0);
+          revenue[monthYear] = (revenue[monthYear] || 0) + amount;
+        });
+      return revenue;
+    }
+
+    function getStatusCounts(bookings) {
+      return {
+        pending: bookings.filter(b => b.booking_status === 'pending').length,
+        approved: bookings.filter(b => b.booking_status === 'approved').length,
+        rejected: bookings.filter(b => b.booking_status === 'rejected').length,
+        completed: bookings.filter(b => b.booking_status === 'completed').length
+      };
+    }
+
+    function getPackageCounts(bookings) {
+      const counts = {};
+      bookings.forEach(booking => {
+        const pkg = booking.food_package;
+        if (pkg) {
+          counts[pkg] = (counts[pkg] || 0) + 1;
+        }
+      });
+
+      // Sort by count and get top 5
+      const sorted = Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+
+      return {
+        labels: sorted.map(([pkg]) => packageNames[pkg] || pkg),
+        data: sorted.map(([, count]) => count)
+      };
+    }
+
+    function getCustomerGrowth(bookings) {
+      const growth = {};
+      const uniqueCustomers = new Set();
+      
+      bookings
+        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+        .forEach(booking => {
+          const date = new Date(booking.created_at);
+          const monthYear = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+          uniqueCustomers.add(booking.user_id);
+          growth[monthYear] = uniqueCustomers.size;
+        });
+      
+      return growth;
+    }
+
+    // ==================== BOOKINGS FUNCTIONS ====================
+
+    // Load Bookings - FIXED VERSION
+    async function loadBookings() {
+      const tbody = document.getElementById('bookingsTable');
+      tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4"><i class="fas fa-spinner fa-spin"></i> Loading bookings...</td></tr>`;
+      
+      console.log('🔄 Starting to load bookings...');
+      
+      try {
+        const result = await window.api.getBookings();
+        console.log('📊 Bookings API result:', result);
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to load bookings');
+        }
+        
+        allBookings = result.data || [];
+        filteredBookings = [...allBookings];
+        
+        console.log(`✅ Loaded ${allBookings.length} bookings`);
+        
+        if (allBookings.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="8" class="text-center py-8 text-gray-500">
+                <i class="fas fa-calendar-times text-3xl mb-2"></i>
+                <p>No bookings found</p>
+                <p class="text-sm mt-2">There are no bookings in the system yet.</p>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        displayBookings();
+      } catch (err) {
+        console.error('❌ Error loading bookings:', err);
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" class="text-center py-4 text-red-500">
+              <i class="fas fa-exclamation-triangle text-xl mb-2"></i>
+              <p>Error loading bookings</p>
+              <p class="text-sm mt-1">${err.message}</p>
+              <button onclick="loadBookings()" class="mt-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">
+                <i class="fas fa-refresh mr-1"></i> Try Again
+              </button>
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    // Filter Bookings
+    function filterBookings() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const statusFilter = document.getElementById('statusFilter').value;
+      const paymentFilter = document.getElementById('paymentFilter').value;
+      
+      filteredBookings = allBookings.filter(b => {
+        const matchesSearch = 
+          (b.full_name || '').toLowerCase().includes(searchTerm) ||
+          (b.contact_number || '').toLowerCase().includes(searchTerm) ||
+          (b.event_type || '').toLowerCase().includes(searchTerm);
+        
+        const matchesStatus = statusFilter === 'all' || b.booking_status === statusFilter;
+        const matchesPayment = paymentFilter === 'all' || 
+          (paymentFilter === 'paid' && b.payment_status === 'paid') ||
+          (paymentFilter === 'unpaid' && (!b.payment_status || b.payment_status !== 'paid'));
+        
+        return matchesSearch && matchesStatus && matchesPayment;
+      });
+
+      displayBookings();
+    }
+
+    // Display Bookings - UPDATED: TINANGGAL ANG LOCATION COLUMN
+    function displayBookings() {
+      const tbody = document.getElementById('bookingsTable');
+      
+      if (filteredBookings.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-gray-500">No bookings found</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filteredBookings.map(b => {
+        const avatarUrl = b.avatar_url;
+        const userName = b.full_name || 'N/A';
+        const initials = userName.charAt(0).toUpperCase();
+        
+        return `
+          <tr class="border-b hover:bg-gray-50">
+            <td class="px-6 py-3">
+              <div class="flex items-center gap-3">
+                ${avatarUrl ? `
+                  <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center overflow-hidden">
+                    <img src="${avatarUrl}" alt="${userName}" class="w-full h-full object-cover">
+                  </div>
+                ` : `
+                  <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-bold text-sm">
+                    ${initials}
+                  </div>
+                `}
+                <span>${userName}</span>
+              </div>
+            </td>
+            <td class="px-6 py-3">${b.contact_number || 'N/A'}</td>
+            <td class="px-6 py-3">${b.event_type || 'N/A'}</td>
+            <td class="px-6 py-3">${b.event_date ? new Date(b.event_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}</td>
+            <td class="px-6 py-3">${formatTime(b.start_time)} - ${formatTime(b.end_time)}</td>
+            <td class="px-6 py-3">
+              <span class="px-3 py-1 rounded-full text-xs font-semibold ${
+                b.booking_status === 'approved' ? 'bg-green-100 text-green-700' : 
+                b.booking_status === 'rejected' ? 'bg-red-100 text-red-700' : 
+                b.booking_status === 'completed' ? 'bg-blue-100 text-blue-700' :
+                'bg-yellow-100 text-yellow-700'
+              }">
+                ${b.booking_status}
+              </span>
+            </td>
+            <td class="px-6 py-3">
+              <span class="px-3 py-1 rounded-full text-xs font-semibold ${
+                b.payment_status === 'paid' ? 'bg-green-100 text-green-700' : 
+                'bg-gray-100 text-gray-700'
+              }">
+                ${b.payment_status || 'unpaid'}
+              </span>
+            </td>
+            <td class="px-6 py-3 text-center">
+              <button onclick="viewBooking('${b.id}')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg transition-colors flex items-center gap-1 justify-center text-sm mx-auto">
+                <i class="fas fa-eye"></i> View
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // View booking details - UPDATED WITH COMPLETE BUTTON
+    async function viewBooking(id) {
+      console.log('🔍 Looking for booking ID:', id);
+      
+      if (allBookings.length === 0) {
+        await loadBookings();
+      }
+
+      const booking = allBookings.find(b => String(b.id) === String(id));
+      
+      if (!booking) {
+        alert('Booking not found! ID: ' + id + '\n\nPlease refresh the bookings list and try again.');
+        console.error('❌ Booking ID not found:', id);
+        return;
+      }
+
+      console.log('✅ Booking found:', booking);
+      currentBookingId = id;
+
+      const modal = document.getElementById('detailsModal');
+      const content = document.getElementById('modalContent');
+      const actions = document.getElementById('modalActions');
+
+      const avatarUrl = booking.avatar_url;
+      const userName = booking.full_name || 'N/A';
+      const initials = userName.charAt(0).toUpperCase();
+
+      let menusDisplay = 'N/A';
+      if (booking.selected_menus) {
+        try {
+          const menus = typeof booking.selected_menus === 'string' 
+            ? JSON.parse(booking.selected_menus) 
+            : booking.selected_menus;
+          
+          if (Array.isArray(menus)) {
+            menusDisplay = menus.length > 0 ? menus.join(', ') : 'N/A';
+          } else if (typeof menus === 'object') {
+            menusDisplay = JSON.stringify(menus, null, 2);
+          } else {
+            menusDisplay = String(menus);
+          }
+        } catch (e) {
+          menusDisplay = String(booking.selected_menus);
+        }
+      }
+
+      const paymentStatus = booking.payment_status || 'unpaid';
+      const isPaid = paymentStatus === 'paid';
+      const paymentColor = isPaid ? 'green' : 'yellow';
+      const paymentIcon = isPaid ? 'fa-money-bill-wave' : 'fa-clock';
+
+      // Get package display name
+      const packageDisplay = packageNames[booking.food_package] || booking.food_package || 'N/A';
+
+      // Get service charge and total price information - UPDATED
+      const serviceCharge = parseFloat(booking.service_charge || 0);
+      const basePrice = parseFloat(booking.package_price || 0);
+      const totalPrice = parseFloat(booking.total_price || (basePrice + serviceCharge));
+
+      content.innerHTML = `
+        <div class="space-y-6">
+          <!-- Header Section - IMPROVED LAYOUT -->
+          <div class="flex justify-between items-start pb-4 border-b">
+            <div class="flex items-center gap-3">
+              ${avatarUrl ? `
+                <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center overflow-hidden">
+                  <img src="${avatarUrl}" alt="${userName}" class="w-full h-full object-cover">
+                </div>
+              ` : `
+                <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-bold text-lg">
+                  ${initials}
+                </div>
+              `}
+              <div>
+                <h3 class="text-2xl font-bold text-gray-800">${userName}</h3>
+                <p class="text-gray-500 mt-1">Booking ID: ${booking.id}</p>
+                ${booking.user_email ? `<p class="text-sm text-gray-500">Email: ${booking.user_email}</p>` : ''}
+              </div>
+            </div>
+            
+            <!-- Status Indicators - IMPROVED LAYOUT -->
+            <div class="flex flex-col gap-3 items-end">
+              <div class="flex items-center gap-2">
+                <span class="text-sm text-gray-500 font-medium">Status:</span>
+                <span class="px-3 py-1 rounded-full text-sm font-semibold ${
+                  booking.booking_status === 'approved' ? 'bg-green-100 text-green-700 border border-green-200' : 
+                  booking.booking_status === 'rejected' ? 'bg-red-100 text-red-700 border border-red-200' : 
+                  booking.booking_status === 'completed' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                  'bg-yellow-100 text-yellow-700 border border-yellow-200'
+                }">
+                  ${booking.booking_status.toUpperCase()}
+                </span>
+              </div>
+              
+              <div class="flex items-center gap-2">
+                <span class="text-sm text-gray-500 font-medium">Payment:</span>
+                <span class="px-3 py-1 rounded text-sm font-semibold ${
+                  isPaid ? 'text-green-600' : 'text-yellow-600'
+                }">
+                  <i class="fas ${paymentIcon} mr-1"></i>
+                  ${paymentStatus.toUpperCase()}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Information Section - IMPROVED LAYOUT -->
+          <div class="bg-gray-50 p-4 rounded-lg border">
+            <h4 class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <i class="fas fa-money-bill-wave text-red-600"></i>
+              Payment Information
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="text-center p-3 bg-white rounded-lg border">
+                <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Base Package Price</p>
+                <p class="text-lg font-bold text-gray-800">${formatCurrency(basePrice)}</p>
+              </div>
+              ${serviceCharge > 0 ? `
+                <div class="text-center p-3 bg-white rounded-lg border">
+                  <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Service Charge</p>
+                  <p class="text-lg font-bold text-red-600">+ ${formatCurrency(serviceCharge)}</p>
+                </div>
+              ` : `
+                <div class="text-center p-3 bg-white rounded-lg border border-dashed">
+                  <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Service Charge</p>
+                  <p class="text-sm text-gray-400">No additional charges</p>
+                </div>
+              `}
+              <div class="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Total Amount</p>
+                <p class="text-xl font-bold text-blue-700">${formatCurrency(totalPrice)}</p>
+              </div>
+            </div>
+            
+            <!-- Service Charge Description - SEPARATE SECTION -->
+            ${serviceCharge > 0 && booking.charge_description ? `
+              <div class="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                <h5 class="font-semibold text-yellow-700 mb-2 flex items-center gap-2">
+                  <i class="fas fa-receipt"></i>
+                  Service Charge Description
+                </h5>
+                <p class="text-yellow-600 text-sm">${booking.charge_description}</p>
+              </div>
+            ` : ''}
+            
+            ${!isPaid && booking.booking_status === 'approved' ? `
+              <div class="mt-3 p-3 bg-red-50 rounded border border-red-200">
+                <p class="text-sm text-red-600 flex items-center gap-2">
+                  <i class="fas fa-exclamation-circle"></i>
+                  <strong>Important:</strong> This booking will be automatically cancelled if payment is not made within 20 hours of approval.
+                </p>
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Service Charge Input Section - ADDED -->
+          ${booking.booking_status === 'pending' || booking.booking_status === 'approved' ? `
+            <div class="bg-white p-4 rounded-lg border border-blue-200">
+              <h4 class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <i class="fas fa-plus-circle text-blue-600"></i>
+                Add Service Charge
+              </h4>
+              <form id="serviceChargeForm" class="space-y-3">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Charge Description
+                  </label>
+                  <textarea 
+                    id="chargeDescription" 
+                    rows="2"
+                    placeholder="Enter detailed description for the service charge (e.g., Location surcharge for remote area, Additional setup fee for complex theme, Delivery charge for far location, etc.)"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+                  ></textarea>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                      Amount to Add (₱)
+                    </label>
+                    <div class="relative">
+                      <span class="absolute left-3 top-2 text-gray-500">₱</span>
+                      <input 
+                        type="number" 
+                        id="chargeAmount" 
+                        step="100"
+                        min="0"
+                        placeholder="0.00"
+                        class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div class="flex items-end">
+                    <button 
+                      type="button" 
+                      onclick="addServiceCharge()"
+                      class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+                    >
+                      <i class="fas fa-plus"></i>
+                      Add Charge
+                    </button>
+                  </div>
+                </div>
+                
+                <div class="bg-gray-50 p-3 rounded-lg border">
+                  <p class="text-sm text-gray-600">
+                    <strong>Current Total:</strong> ${formatCurrency(totalPrice)}
+                  </p>
+                  <p class="text-sm text-gray-600 mt-1">
+                    <strong>New Total:</strong> ${formatCurrency(totalPrice)}
+                  </p>
+                </div>
+              </form>
+            </div>
+          ` : ''}
+
+          <!-- Contact Information -->
+          <div class="bg-gray-50 p-4 rounded-lg border">
+            <h4 class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <i class="fas fa-address-book text-red-600"></i>
+              Contact Information
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Contact Number</p>
+                <p class="text-gray-800 font-medium">${booking.contact_number || 'N/A'}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Location</p>
+                <p class="text-gray-800 font-medium">${booking.location || 'N/A'}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Event Details -->
+          <div class="bg-gray-50 p-4 rounded-lg border">
+            <h4 class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <i class="fas fa-calendar-alt text-red-600"></i>
+              Event Details
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Event Type</p>
+                <p class="text-gray-800 font-medium">${booking.event_type || 'N/A'}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Event Date</p>
+                <p class="text-gray-800 font-medium">${booking.event_date ? new Date(booking.event_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Time Schedule</p>
+                <p class="text-gray-800 font-medium">${formatTime(booking.start_time)} - ${formatTime(booking.end_time)}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Event Theme</p>
+                <p class="text-gray-800 font-medium">${booking.event_theme || 'N/A'}</p>
+              </div>
+              ${booking.custom_theme ? `
+                <div>
+                  <p class="text-xs text-gray-500 uppercase tracking-wide">Custom Theme</p>
+                  <p class="text-gray-800 font-medium">${booking.custom_theme}</p>
+                </div>
+              ` : ''}
+              ${booking.theme_suggestions ? `
+                <div class="md:col-span-2">
+                  <p class="text-xs text-gray-500 uppercase tracking-wide">Theme Suggestions</p>
+                  <p class="text-gray-800 font-medium">${booking.theme_suggestions}</p>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+
+          <!-- Celebrant Information -->
+          <div class="bg-gray-50 p-4 rounded-lg border">
+            <h4 class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <i class="fas fa-birthday-cake text-red-600"></i>
+              Celebrant Information
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Celebrant Name</p>
+                <p class="text-gray-800 font-medium">${booking.celebrant_name || 'N/A'}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Age</p>
+                <p class="text-gray-800 font-medium">${booking.celebrant_age || 'N/A'}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Number of Guests</p>
+                <p class="text-gray-800 font-medium">${booking.guest_count || 'N/A'}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Food & Menu -->
+          <div class="bg-gray-50 p-4 rounded-lg border">
+            <h4 class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <i class="fas fa-utensils text-red-600"></i>
+              Food & Menu Selection
+            </h4>
+            <div class="grid grid-cols-1 gap-3">
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Food Package</p>
+                <p class="text-gray-800 font-medium">${packageDisplay}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Selected Menus</p>
+                <p class="text-gray-800 font-medium whitespace-pre-wrap">${menusDisplay}</p>
+              </div>
+            </div>
+          </div>
+
+          ${booking.cancellation_reason ? `
+            <div class="bg-red-50 p-4 rounded-lg border-l-4 border-red-600">
+              <h4 class="font-semibold text-red-700 mb-2 flex items-center gap-2">
+                <i class="fas fa-exclamation-circle"></i>
+                Cancellation Reason
+              </h4>
+              <p class="text-red-600">${booking.cancellation_reason}</p>
+            </div>
+          ` : ''}
+
+          <!-- Event Rating (for completed events) -->
+          ${booking.booking_status === 'completed' && booking.event_rating ? `
+            <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-600">
+              <h4 class="font-semibold text-green-700 mb-2 flex items-center gap-2">
+                <i class="fas fa-star"></i>
+                Event Rating
+              </h4>
+              <div class="flex items-center gap-2">
+                <div class="rating-stars">
+                  ${Array.from({length: 5}, (_, i) => `
+                    <i class="fas fa-star ${i < booking.event_rating ? 'text-yellow-400' : 'text-gray-300'}"></i>
+                  `).join('')}
+                </div>
+                <span class="text-green-700 font-semibold">${booking.event_rating}/5</span>
+              </div>
+              ${booking.event_feedback ? `
+                <div class="mt-2">
+                  <p class="text-sm text-green-600"><strong>Feedback:</strong> 
+                    ${booking.event_feedback.split(' ').length > 2 ? 
+                      `${getShortFeedback(booking.event_feedback)} <button onclick="showFullFeedback('${booking.id}')" class="text-blue-600 hover:text-blue-700 font-medium text-xs ml-1">view more</button>` 
+                      : booking.event_feedback
+                    }
+                  </p>
+                </div>
+              ` : ''}
+              <p class="text-xs text-green-600 mt-2">
+                Completed on ${booking.completion_date ? new Date(booking.completion_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
+              </p>
+            </div>
+          ` : ''}
+
+          <!-- Booking Information -->
+          <div class="pt-4 border-t">
+            <div class="flex items-center gap-2 text-sm text-gray-500">
+              <i class="fas fa-clock"></i>
+              <span>Booking submitted on ${new Date(booking.created_at).toLocaleString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric', 
+                hour: 'numeric', 
+                minute: 'numeric', 
+                hour12: true 
+              })}</span>
+            </div>
+            ${booking.approval_date ? `
+            <div class="flex items-center gap-2 text-sm text-gray-500 mt-1">
+              <i class="fas fa-check-circle"></i>
+              <span>Approved on ${new Date(booking.approval_date).toLocaleString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric', 
+                hour: 'numeric', 
+                minute: 'numeric', 
+                hour12: true 
+              })}</span>
+            </div>
+            ` : ''}
+            ${isPaid ? `
+            <div class="flex items-center gap-2 text-sm text-green-500 mt-1">
+              <i class="fas fa-money-bill-wave"></i>
+              <span>Payment completed</span>
+            </div>
+            ` : ''}
+            ${booking.completion_date ? `
+            <div class="flex items-center gap-2 text-sm text-blue-500 mt-1">
+              <i class="fas fa-check-double"></i>
+              <span>Event completed on ${new Date(booking.completion_date).toLocaleString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric'
+              })}</span>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+
+      actions.innerHTML = `
+        ${booking.booking_status === 'pending' ? `
+          <button onclick="approveBooking('${booking.id}')" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors">
+            <i class="fas fa-check"></i> Approve Booking
+          </button>
+          <button onclick="showRejectionModal('${booking.id}')" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors">
+            <i class="fas fa-times"></i> Reject Booking
+          </button>
+        ` : ''}
+        ${booking.booking_status === 'approved' && !isPaid ? `
+          <button onclick="markPaymentAsPaid('${booking.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors">
+            <i class="fas fa-money-bill-wave"></i> Mark Payment as Paid
+          </button>
+        ` : ''}
+        ${booking.booking_status === 'approved' && isPaid && booking.booking_status !== 'completed' ? `
+          <button onclick="showCompleteModal('${booking.id}')" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors">
+            <i class="fas fa-check-double"></i> Mark as Complete
+          </button>
+        ` : ''}
+        <button onclick="closeModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors">
+          Close
+        </button>
+      `;
+
+      modal.classList.remove('hidden');
+      
+      // Add event listener for amount input to update new total display
+      const amountInput = document.getElementById('chargeAmount');
+      if (amountInput) {
+        amountInput.addEventListener('input', function() {
+          const addAmount = parseFloat(this.value || 0);
+          const newTotal = totalPrice + addAmount;
+          const newTotalDisplay = document.querySelector('#serviceChargeForm .bg-gray-50 p:nth-child(2)');
+          if (newTotalDisplay) {
+            newTotalDisplay.innerHTML = `<strong>New Total:</strong> ${formatCurrency(newTotal)}`;
+          }
+        });
+      }
+    }
+
+    // Helper function to get short feedback (3-4 words)
+    function getShortFeedback(feedback) {
+      if (!feedback || feedback === 'No feedback provided') {
+        return 'No feedback provided';
+      }
+      
+      const words = feedback.trim().split(' ');
+      if (words.length <= 1) {
+        return feedback;
+      }
+      
+      return words.slice(0, 1).join(' ') + '...';
+    }
+
+    // Add Service Charge function
+    async function addServiceCharge() {
+      const description = document.getElementById('chargeDescription').value.trim();
+      const amount = parseFloat(document.getElementById('chargeAmount').value || 0);
+      
+      if (!description) {
+        alert('Please provide a charge description');
+        document.getElementById('chargeDescription').focus();
+        return;
+      }
+
+      if (amount <= 0 || isNaN(amount)) {
+        alert('Please enter a valid amount to add');
+        document.getElementById('chargeAmount').focus();
+        return;
+      }
+
+      try {
+        const booking = allBookings.find(b => String(b.id) === String(currentBookingId));
+        if (!booking) {
+          alert('Booking not found');
+          return;
+        }
+
+        const currentBase = parseFloat(booking.package_price || 0);
+        const currentService = parseFloat(booking.service_charge || 0);
+        const newService = currentService + amount;
+        const newTotal = currentBase + newService;
+        
+        // Use API to add service charge
+        const result = await window.api.addServiceCharge(currentBookingId, description, amount, newService, newTotal);
+        if (!result.success) throw new Error(result.error);
+        
+        alert(`Service charge added successfully!\n\nDescription: ${description}\nAmount: ${formatCurrency(amount)}\nNew Total: ${formatCurrency(newTotal)}`);
+        
+        // Refresh and stay on current modal
+        await loadBookings();
+        viewBooking(currentBookingId); // Reload the modal with updated data
+        
+      } catch (err) {
+        alert(`Error: ${err.message}`);
+        console.error('Error adding service charge:', err);
+      }
+    }
+
+    // Approve booking - UPDATED WITH NEW COLUMNS
+    async function approveBooking(bookingId) {
+      if (!confirm('Are you sure you want to approve this booking?\n\nThis will start the 20-hour payment countdown and send an email to the customer.')) return;
+
+      try {
+        // Update booking status with approval_date
+        const result = await window.api.updateBookingStatus(bookingId, 'approved', null);
+        if (!result.success) throw new Error(result.error);
+        
+        // Set payment deadline
+        const deadlineResult = await window.api.setPaymentDeadline(bookingId);
+        if (!deadlineResult.success) throw new Error(deadlineResult.error);
+        
+        // Get booking details for email
+        const booking = allBookings.find(b => String(b.id) === String(bookingId));
+        if (booking && booking.user_email) {
+          // Send approval email - UPDATED: Use total_price
+          const emailResult = await window.api.sendBookingApprovalEmail({
+            email: booking.user_email,
+            full_name: booking.full_name,
+            booking_id: booking.id,
+            package_price: booking.package_price || 0,
+            service_charge: booking.service_charge || 0,
+            charge_description: booking.charge_description || '',
+            total_price: booking.total_price || booking.package_price || 0,
+            event_date: booking.event_date
+          });
+          
+          if (!emailResult.success) {
+            console.warn('⚠️ Could not send approval email:', emailResult.message);
+          }
+        }
+        
+        closeModal();
+        alert('Booking approved successfully! Customer has been notified via email and has 20 hours to make payment.');
+        loadBookings();
+        refreshDashboard();
+      } catch (err) {
+        alert(`Error: ${err.message}`);
+        console.error('Error approving booking:', err);
+      }
+    }
+
+    // Mark payment as paid - UPDATED WITH EMAIL
+    async function markPaymentAsPaid(bookingId) {
+      if (!confirm('Are you sure you want to mark this payment as paid?\n\nThis will confirm the booking and send a confirmation email to the customer.')) return;
+
+      try {
+        // Update payment status
+        const result = await window.api.markPaymentAsPaid(bookingId);
+        if (!result.success) throw new Error(result.error);
+        
+        // Get booking details for email
+        const booking = allBookings.find(b => String(b.id) === String(bookingId));
+        if (booking && booking.user_email) {
+          // Send payment received email - UPDATED: Use total_price
+          const emailResult = await window.api.sendPaymentReceivedEmail({
+            email: booking.user_email,
+            full_name: booking.full_name,
+            booking_id: booking.id,
+            package_price: booking.package_price || 0,
+            service_charge: booking.service_charge || 0,
+            charge_description: booking.charge_description || '',
+            total_price: booking.total_price || booking.package_price || 0,
+            event_date: booking.event_date
+          });
+          
+          if (!emailResult.success) {
+            console.warn('⚠️ Could not send payment confirmation email:', emailResult.message);
+          }
+        }
+        
+        closeModal();
+        alert('Payment marked as paid successfully! Customer has been notified via email and their booking is now confirmed.');
+        loadBookings();
+        refreshDashboard();
+      } catch (err) {
+        alert(`Error: ${err.message}`);
+        console.error('Error marking payment as paid:', err);
+      }
+    }
+
+    // Show complete event modal - UPDATED: TANGGAL ANG FEEDBACK INPUT
+    function showCompleteModal(bookingId) {
+      const modal = document.getElementById('completeModal');
+      modal.classList.remove('hidden');
+      currentBookingId = bookingId;
+    }
+
+    // Complete event without feedback
+    async function completeEventWithoutFeedback() {
+      try {
+        // Mark booking as completed without feedback
+        const result = await window.api.completeBooking(currentBookingId, null, null);
+        if (!result.success) throw new Error(result.error);
+        
+        closeCompleteModal();
+        closeModal();
+        alert('Event marked as completed successfully!');
+        loadBookings();
+        refreshDashboard();
+        loadCompletedEvents();
+      } catch (err) {
+        alert(`Error: ${err.message}`);
+        console.error('Error completing booking:', err);
+      }
+    }
+
+    // Close complete modal
+    function closeCompleteModal() {
+      document.getElementById('completeModal').classList.add('hidden');
+    }
+
+    // Show rejection reason modal - UPDATED WITH NEW COLUMN
+    function showRejectionModal(bookingId) {
+      const modal = document.getElementById('rejectionModal');
+      const form = document.getElementById('rejectionForm');
+      const textarea = document.getElementById('rejectionReason');
+      
+      textarea.value = '';
+      modal.classList.remove('hidden');
+      textarea.focus();
+
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        const reason = textarea.value.trim();
+        
+        if (!reason) {
+          alert('Please provide a reason for rejection');
+          return;
+        }
+
+        try {
+          // Update booking status to rejected with cancellation_reason
+          const result = await window.api.updateBookingStatus(bookingId, 'rejected', reason);
+          if (!result.success) throw new Error(result.error);
+          
+          // Get booking details for email
+          const booking = allBookings.find(b => String(b.id) === String(bookingId));
+          if (booking && booking.user_email) {
+            // Send rejection email
+            const emailResult = await window.api.sendBookingRejectionEmail({
+              email: booking.user_email,
+              full_name: booking.full_name,
+              booking_id: booking.id,
+              rejection_reason: reason
+            });
+            
+            if (!emailResult.success) {
+              console.warn('⚠️ Could not send rejection email:', emailResult.message);
+            }
+          }
+          
+          closeRejectionModal();
+          closeModal();
+          alert('Booking rejected successfully! Customer has been notified via email.');
+          loadBookings();
+          refreshDashboard();
+        } catch (err) {
+          alert(`Error: ${err.message}`);
+          console.error('Error rejecting booking:', err);
+        }
+      };
+    }
+
+    // Close rejection modal - ENHANCED
+    function closeRejectionModal() {
+      const modal = document.getElementById('rejectionModal');
+      const form = document.getElementById('rejectionForm');
+      
+      if (form) {
+        form.reset();
+        form.onsubmit = null;
+      }
+      
+      modal.classList.add('hidden');
+    }
+
+    // Close modal - ENHANCED
+    function closeModal() {
+      const modal = document.getElementById('detailsModal');
+      modal.classList.add('hidden');
+    }
+
+    // ==================== STAFF MANAGEMENT FUNCTIONS ====================
+
+    // Load Staff
+    async function loadStaff() {
+      const tbody = document.getElementById('staffTable');
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4"><i class="fas fa-spinner fa-spin"></i> Loading staff...</td></tr>`;
+      
+      try {
+        const result = await window.api.getAllStaff();
+        if (!result.success) throw new Error(result.error);
+        
+        allStaff = result.data;
+        filteredStaff = [...allStaff];
+        
+        // Update staff statistics
+        updateStaffStats(allStaff);
+        
+        if (allStaff.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="6" class="text-center py-8 text-gray-500">
+                <i class="fas fa-users-slash text-3xl mb-2"></i>
+                <p>No staff members found</p>
+                <p class="text-sm mt-2">There are no staff accounts in the system yet.</p>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        displayStaff();
+      } catch (err) {
+        console.error('❌ Error loading staff:', err);
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center py-4 text-red-500">
+              <i class="fas fa-exclamation-triangle text-xl mb-2"></i>
+              <p>Error loading staff</p>
+              <p class="text-sm mt-1">${err.message}</p>
+              <button onclick="loadStaff()" class="mt-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">
+                <i class="fas fa-refresh mr-1"></i> Try Again
+              </button>
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    // Update staff statistics
+    function updateStaffStats(staff) {
+      const totalStaff = staff.length;
+      const pendingStaff = staff.filter(s => s.status === 'pending').length;
+      const approvedStaff = staff.filter(s => s.status === 'approved').length;
+      const rejectedStaff = staff.filter(s => s.status === 'rejected').length;
+
+      animateValue('totalStaff', 0, totalStaff, 800);
+      animateValue('pendingStaff', 0, pendingStaff, 800);
+      animateValue('approvedStaff', 0, approvedStaff, 800);
+      animateValue('rejectedStaff', 0, rejectedStaff, 800);
+    }
+
+    // Filter Staff
+    function filterStaff() {
+      const searchTerm = document.getElementById('staffSearchInput').value.toLowerCase();
+      const statusFilter = document.getElementById('staffStatusFilter').value;
+      
+      filteredStaff = allStaff.filter(s => {
+        const matchesSearch = 
+          (s.full_name || '').toLowerCase().includes(searchTerm) ||
+          (s.email || '').toLowerCase().includes(searchTerm);
+        
+        const matchesStatus = statusFilter === 'all' || s.status === statusFilter;
+        
+        return matchesSearch && matchesStatus;
+      });
+
+      displayStaff();
+    }
+
+    // Display Staff
+    function displayStaff() {
+      const tbody = document.getElementById('staffTable');
+      
+      if (filteredStaff.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-500">No staff members found</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filteredStaff.map(s => {
+        const userName = s.full_name || 'N/A';
+        const initials = userName.charAt(0).toUpperCase();
+        
+        return `
+          <tr class="border-b hover:bg-gray-50">
+            <td class="px-6 py-3">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">
+                  ${initials}
+                </div>
+                <span>${userName}</span>
+              </div>
+            </td>
+            <td class="px-6 py-3">${s.email || 'N/A'}</td>
+            <td class="px-6 py-3">
+              <span class="px-2 py-1 rounded text-xs font-semibold bg-purple-100 text-purple-700">
+                ${s.role || 'staff'}
+              </span>
+            </td>
+            <td class="px-6 py-3">
+              <span class="px-3 py-1 rounded-full text-xs font-semibold ${
+                s.status === 'approved' ? 'bg-green-100 text-green-700' : 
+                s.status === 'rejected' ? 'bg-red-100 text-red-700' : 
+                'bg-yellow-100 text-yellow-700'
+              }">
+                ${s.status}
+              </span>
+            </td>
+            <td class="px-6 py-3">${s.created_at ? new Date(s.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}</td>
+            <td class="px-6 py-3 text-center">
+              <button onclick="viewStaff('${s.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg transition-colors flex items-center gap-1 justify-center text-sm mx-auto">
+                <i class="fas fa-eye"></i> View
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // View Staff Details
+    async function viewStaff(staffId) {
+      console.log('🔍 Looking for staff ID:', staffId);
+      
+      if (allStaff.length === 0) {
+        await loadStaff();
+      }
+
+      const staff = allStaff.find(s => String(s.id) === String(staffId));
+      
+      if (!staff) {
+        alert('Staff not found! ID: ' + staffId + '\n\nPlease refresh the staff list and try again.');
+        console.error('❌ Staff ID not found:', staffId);
+        return;
+      }
+
+      console.log('✅ Staff found:', staff);
+      currentStaffId = staffId;
+
+      const modal = document.getElementById('staffDetailsModal');
+      const content = document.getElementById('staffModalContent');
+      const actions = document.getElementById('staffModalActions');
+
+      const userName = staff.full_name || 'N/A';
+      const initials = userName.charAt(0).toUpperCase();
+
+      content.innerHTML = `
+        <div class="space-y-6">
+          <!-- Header Section -->
+          <div class="flex justify-between items-start pb-4 border-b">
+            <div class="flex items-center gap-3">
+              <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-2xl">
+                ${initials}
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold text-gray-800">${userName}</h3>
+                <p class="text-gray-500 mt-1">Staff ID: ${staff.id}</p>
+              </div>
+            </div>
+            
+            <!-- Status Indicators -->
+            <div class="text-right">
+              <span class="px-4 py-2 rounded-full text-sm font-semibold ${
+                staff.status === 'approved' ? 'bg-green-100 text-green-700' : 
+                staff.status === 'rejected' ? 'bg-red-100 text-red-700' : 
+                'bg-yellow-100 text-yellow-700'
+              }">
+                ${staff.status.toUpperCase()}
+              </span>
+            </div>
+          </div>
+
+          <!-- Staff Information -->
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <h4 class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <i class="fas fa-user-shield text-blue-600"></i>
+              Account Information
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Email Address</p>
+                <p class="text-gray-800 font-medium">${staff.email || 'N/A'}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Role</p>
+                <p class="text-gray-800 font-medium">${staff.role || 'staff'}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Account Status</p>
+                <p class="text-gray-800 font-medium">${staff.status}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Join Date</p>
+                <p class="text-gray-800 font-medium">${staff.created_at ? new Date(staff.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}</p>
+              </div>
+            </div>
+          </div>
+
+          ${staff.rejection_reason ? `
+            <div class="bg-red-50 p-4 rounded-lg border-l-4 border-red-600">
+              <h4 class="font-semibold text-red-700 mb-2 flex items-center gap-2">
+                <i class="fas fa-exclamation-circle"></i>
+                Rejection Reason
+              </h4>
+              <p class="text-red-600">${staff.rejection_reason}</p>
+            </div>
+          ` : ''}
+
+          <!-- Account Information -->
+          <div class="pt-4 border-t">
+            <div class="flex items-center gap-2 text-sm text-gray-500">
+              <i class="fas fa-clock"></i>
+              <span>Account created on ${staff.created_at ? new Date(staff.created_at).toLocaleString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric', 
+                hour: 'numeric', 
+                minute: 'numeric', 
+                hour12: true 
+              }) : 'N/A'}</span>
+            </div>
+            ${staff.updated_at ? `
+            <div class="flex items-center gap-2 text-sm text-gray-500 mt-1">
+              <i class="fas fa-sync-alt"></i>
+              <span>Last updated ${new Date(staff.updated_at).toLocaleString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric', 
+                hour: 'numeric', 
+                minute: 'numeric', 
+                hour12: true 
+              })}</span>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+
+      actions.innerHTML = `
+        ${staff.status === 'pending' ? `
+          <button onclick="approveStaff('${staff.id}')" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors">
+            <i class="fas fa-check"></i> Approve Account
+          </button>
+          <button onclick="showStaffRejectionModal('${staff.id}')" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors">
+            <i class="fas fa-times"></i> Reject Account
+          </button>
+        ` : ''}
+        ${staff.status === 'rejected' ? `
+          <button onclick="approveStaff('${staff.id}')" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors">
+            <i class="fas fa-check"></i> Approve Account
+          </button>
+        ` : ''}
+        ${staff.status === 'approved' ? `
+          <button onclick="deleteStaff('${staff.id}')" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors">
+            <i class="fas fa-trash"></i> Delete Account
+          </button>
+        ` : ''}
+        <button onclick="closeStaffModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors">
+          Close
+        </button>
+      `;
+
+      modal.classList.remove('hidden');
+    }
+
+    // Approve Staff Account
+    async function approveStaff(staffId) {
+      if (!confirm('Are you sure you want to approve this staff account?\n\nThis will allow the staff member to access the system.')) return;
+
+      try {
+        const result = await window.api.updateStaffStatus(staffId, 'approved', null);
+        if (!result.success) throw new Error(result.error);
+        
+        closeStaffModal();
+        alert('Staff account approved successfully! The staff member has been notified via email.');
+        loadStaff();
+      } catch (err) {
+        alert(`Error: ${err.message}`);
+        console.error('Error approving staff:', err);
+      }
+    }
+
+    // Show staff rejection modal
+    function showStaffRejectionModal(staffId) {
+      const modal = document.getElementById('staffRejectionModal');
+      const form = document.getElementById('staffRejectionForm');
+      const textarea = document.getElementById('staffRejectionReason');
+      
+      textarea.value = '';
+      modal.classList.remove('hidden');
+      textarea.focus();
+
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        const reason = textarea.value.trim();
+        
+        if (!reason) {
+          alert('Please provide a reason for rejection');
+          return;
+        }
+
+        try {
+          const result = await window.api.updateStaffStatus(staffId, 'rejected', reason);
+          if (!result.success) throw new Error(result.error);
+          
+          closeStaffRejectionModal();
+          closeStaffModal();
+          alert('Staff account rejected successfully! The staff member has been notified via email.');
+          loadStaff();
+        } catch (err) {
+          alert(`Error: ${err.message}`);
+          console.error('Error rejecting staff:', err);
+        }
+      };
+    }
+
+    // Delete Staff Account
+    async function deleteStaff(staffId) {
+      if (!confirm('Are you sure you want to delete this staff account?\n\nThis action cannot be undone.')) return;
+
+      try {
+        const result = await window.api.deleteStaff(staffId);
+        if (!result.success) throw new Error(result.error);
+        
+        closeStaffModal();
+        alert('Staff account deleted successfully!');
+        loadStaff();
+      } catch (err) {
+        alert(`Error: ${err.message}`);
+        console.error('Error deleting staff:', err);
+      }
+    }
+
+    // Close staff modal
+    function closeStaffModal() {
+      document.getElementById('staffDetailsModal').classList.add('hidden');
+    }
+
+    // Close staff rejection modal
+    function closeStaffRejectionModal() {
+      const modal = document.getElementById('staffRejectionModal');
+      const form = document.getElementById('staffRejectionForm');
+      
+      if (form) {
+        form.reset();
+        form.onsubmit = null;
+      }
+      
+      modal.classList.add('hidden');
+    }
+
+    // ==================== COMPLETED EVENTS FUNCTIONS ====================
+
+    // Load completed events
+    async function loadCompletedEvents() {
+      const container = document.getElementById('completedEventsContainer');
+      container.innerHTML = `
+        <div class="text-center py-12 text-gray-500 col-span-3">
+          <i class="fas fa-spinner fa-spin text-3xl mb-4"></i>
+          <p class="text-lg">Loading completed events...</p>
+        </div>
+      `;
+      
+      try {
+        const result = await window.api.getBookings();
+        if (!result.success) throw new Error(result.error);
+        
+        completedEvents = result.data.filter(b => b.booking_status === 'completed');
+        filteredCompletedEvents = [...completedEvents];
+        
+        // Update statistics
+        updateCompletedStats(completedEvents);
+        
+        if (completedEvents.length === 0) {
+          container.innerHTML = `
+            <div class="text-center py-12 text-gray-500 col-span-3">
+              <i class="fas fa-check-circle text-4xl mb-4 text-gray-300"></i>
+              <h3 class="text-xl font-semibold mb-2">No Completed Events Yet</h3>
+              <p class="text-gray-500">Completed events will appear here once marked as complete.</p>
+            </div>
+          `;
+          return;
+        }
+
+        displayCompletedEvents();
+      } catch (err) {
+        console.error('Error loading completed events:', err);
+        container.innerHTML = `
+          <div class="text-center py-12 text-red-500 col-span-3">
+            <i class="fas fa-exclamation-triangle text-3xl mb-4"></i>
+            <p class="text-lg">Error loading completed events</p>
+            <p class="text-sm mt-2">${err.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    // Update completed events statistics - UPDATED: TANGGAL ANG TOTAL GUESTS
+    function updateCompletedStats(events) {
+      const totalCompleted = events.length;
+      const totalRevenue = events.reduce((sum, event) => sum + parseFloat(event.total_price || event.package_price || 0), 0);
+      const avgRating = events.length > 0 
+        ? (events.reduce((sum, event) => sum + parseInt(event.event_rating || 0), 0) / events.length).toFixed(1)
+        : 0;
+
+      animateValue('totalCompleted', 0, totalCompleted, 800);
+      document.getElementById('completedRevenue').textContent = formatCurrency(totalRevenue);
+      document.getElementById('avgRating').textContent = avgRating;
+    }
+
+    // Filter completed events
+    function filterCompletedEvents() {
+      const searchTerm = document.getElementById('completedSearchInput').value.toLowerCase();
+      const eventTypeFilter = document.getElementById('eventTypeFilter').value;
+      const ratingFilter = document.getElementById('ratingFilter').value;
+      
+      filteredCompletedEvents = completedEvents.filter(event => {
+        const matchesSearch = 
+          (event.full_name || '').toLowerCase().includes(searchTerm) ||
+          (event.event_type || '').toLowerCase().includes(searchTerm) ||
+          (event.location || '').toLowerCase().includes(searchTerm);
+        
+        const matchesEventType = eventTypeFilter === 'all' || 
+          (event.event_type && event.event_type.toLowerCase().includes(eventTypeFilter));
+        
+        const matchesRating = ratingFilter === 'all' || 
+          (event.event_rating && parseInt(event.event_rating) >= parseInt(ratingFilter));
+        
+        return matchesSearch && matchesEventType && matchesRating;
+      });
+
+      displayCompletedEvents();
+    }
+
+    // Display completed events in card format - UPDATED: FIXED FEEDBACK DISPLAY
+    function displayCompletedEvents() {
+      const container = document.getElementById('completedEventsContainer');
+      
+      if (filteredCompletedEvents.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-gray-500 col-span-3">
+            <i class="fas fa-search text-4xl mb-4 text-gray-300"></i>
+            <h3 class="text-xl font-semibold mb-2">No Events Found</h3>
+            <p class="text-gray-500">Try adjusting your search filters.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filteredCompletedEvents.map(event => {
+        const avatarUrl = event.avatar_url;
+        const userName = event.full_name || 'N/A';
+        const initials = userName.charAt(0).toUpperCase();
+        const packageDisplay = packageNames[event.food_package] || event.food_package || 'N/A';
+        const rating = event.event_rating || 0;
+        const feedback = event.event_feedback || 'No feedback provided';
+        
+        // Get short feedback (first 3-4 words)
+        const shortFeedback = getShortFeedback(feedback);
+        
+        return `
+          <div class="event-card bg-white rounded-2xl shadow p-6 hover:shadow-lg transition-all duration-300">
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex items-center gap-3">
+                ${avatarUrl ? `
+                  <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center overflow-hidden">
+                    <img src="${avatarUrl}" alt="${userName}" class="w-full h-full object-cover">
+                  </div>
+                ` : `
+                  <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-bold text-lg">
+                    ${initials}
+                  </div>
+                `}
+                <div>
+                  <h3 class="font-bold text-gray-800 text-lg">${userName}</h3>
+                  <p class="text-sm text-gray-500">${event.event_type || 'Event'}</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="rating-stars text-sm">
+                  ${Array.from({length: 5}, (_, i) => `
+                    <i class="fas fa-star ${i < rating ? 'text-yellow-400' : 'text-gray-300'}"></i>
+                  `).join('')}
+                </div>
+                <span class="text-xs text-gray-500">${rating}/5</span>
+              </div>
+            </div>
+            
+            <div class="space-y-3 mb-4">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-500">Date:</span>
+                <span class="font-medium">${event.event_date ? new Date(event.event_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-500">Guests:</span>
+                <span class="font-medium">${event.guest_count || 0}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-500">Package:</span>
+                <span class="font-medium text-green-600">${packageDisplay}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-500">Revenue:</span>
+                <span class="font-medium text-green-600">${formatCurrency(event.total_price || event.package_price || 0)}</span>
+              </div>
+            </div>
+            
+            <div class="border-t pt-3">
+              <p class="text-sm text-gray-600 mb-2"><strong>Feedback:</strong></p>
+              <p class="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">
+                ${shortFeedback}
+                ${feedback.split(' ').length > 4 ? `
+                  <button onclick="showFullFeedback('${event.id}')" class="text-blue-600 hover:text-blue-700 font-medium text-xs mt-1 block">
+                    View More
+                  </button>
+                ` : ''}
+              </p>
+            </div>
+            
+            <div class="mt-4 flex justify-between items-center text-xs text-gray-500">
+              <span>Completed: ${event.completion_date ? new Date(event.completion_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'N/A'}</span>
+              <button onclick="viewBooking('${event.id}')" class="text-green-600 hover:text-green-700 font-medium">
+                View Details
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Show full feedback in modal - FIXED FUNCTION
+    function showFullFeedback(bookingId) {
+      console.log('🔍 Looking for booking feedback:', bookingId);
+      
+      // Find the booking in completed events
+      const booking = completedEvents.find(b => String(b.id) === String(bookingId));
+      
+      if (!booking) {
+        console.error('❌ Booking not found for feedback:', bookingId);
+        return;
+      }
+
+      const feedback = booking.event_feedback || 'No feedback provided';
+      console.log('✅ Found feedback:', feedback);
+      
+      const modal = document.getElementById('feedbackModal');
+      const content = document.getElementById('fullFeedbackText');
+      
+      // Set the feedback text directly
+      content.textContent = feedback;
+      
+      // Show the modal
+      modal.classList.remove('hidden');
+      console.log('✅ Feedback modal shown');
+    }
+
+    // Close feedback modal - FIXED FUNCTION
+    function closeFeedbackModal() {
+      const modal = document.getElementById('feedbackModal');
+      modal.classList.add('hidden');
+      console.log('✅ Feedback modal closed');
+    }
+
+    // ==================== EXPORT FUNCTIONS ====================
+
+    // Load export statistics - UPDATED: TANGGAL ANG ACTIVE USERS
+    async function loadExportStats() {
+      try {
+        const result = await window.api.getBookings();
+        if (!result.success) throw new Error(result.error);
+        
+        const bookings = result.data;
+        const completed = bookings.filter(b => b.booking_status === 'completed').length;
+        const totalRevenue = bookings
+          .filter(b => b.payment_status === 'paid')
+          .reduce((sum, b) => sum + parseFloat(b.total_price || b.package_price || 0), 0);
+
+        document.getElementById('exportTotalBookings').textContent = bookings.length;
+        document.getElementById('exportCompletedEvents').textContent = completed;
+        document.getElementById('exportTotalRevenue').textContent = formatCurrency(totalRevenue);
+      } catch (err) {
+        console.error('Error loading export stats:', err);
+      }
+    }
+
+    // Export all bookings to Excel
+    async function exportAllToExcel() {
+      try {
+        const result = await window.api.getBookings();
+        if (!result.success) throw new Error(result.error);
+        
+        const bookings = result.data;
+        
+        // Prepare data for Excel
+        const excelData = bookings.map(booking => ({
+          'Booking ID': booking.id,
+          'Customer Name': booking.full_name,
+          'Contact Number': booking.contact_number,
+          'Event Type': booking.event_type,
+          'Event Date': booking.event_date ? new Date(booking.event_date).toLocaleDateString() : 'N/A',
+          'Time': `${formatTime(booking.start_time)} - ${formatTime(booking.end_time)}`,
+          'Location': booking.location,
+          'Package': packageNames[booking.food_package] || booking.food_package,
+          'Guest Count': booking.guest_count,
+          'Total Amount': formatCurrency(booking.total_price || booking.package_price || 0),
+          'Booking Status': booking.booking_status,
+          'Payment Status': booking.payment_status || 'unpaid',
+          'Created Date': new Date(booking.created_at).toLocaleDateString()
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(excelData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'All Bookings');
+        XLSX.writeFile(wb, `zaf-kitchen-bookings-${new Date().toISOString().split('T')[0]}.xlsx`);
+        
+        alert('Excel file exported successfully!');
+      } catch (err) {
+        alert('Error exporting to Excel: ' + err.message);
+        console.error('Export error:', err);
+      }
+    }
+
+    // Export all bookings to PDF
+    async function exportAllToPDF() {
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        const result = await window.api.getBookings();
+        if (!result.success) throw new Error(result.error);
+        
+        const bookings = result.data;
+        
+        // Add title
+        doc.setFontSize(16);
+        doc.text('Zaf\'s Kitchen - All Bookings', 14, 15);
+        doc.setFontSize(10);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 22);
+        
+        // Prepare table data
+        const tableData = bookings.map(booking => [
+          booking.full_name || 'N/A',
+          booking.event_type || 'N/A',
+          booking.event_date ? new Date(booking.event_date).toLocaleDateString() : 'N/A',
+          formatCurrency(booking.total_price || booking.package_price || 0),
+          booking.booking_status,
+          booking.payment_status || 'unpaid'
+        ]);
+
+        doc.autoTable({
+          startY: 30,
+          head: [['Customer', 'Event Type', 'Date', 'Amount', 'Status', 'Payment']],
+          body: tableData,
+          theme: 'grid',
+          styles: { fontSize: 8 },
+          headStyles: { fillColor: [220, 38, 38] }
+        });
+
+        doc.save(`zaf-kitchen-bookings-${new Date().toISOString().split('T')[0]}.pdf`);
+        alert('PDF file exported successfully!');
+      } catch (err) {
+        alert('Error exporting to PDF: ' + err.message);
+        console.error('PDF export error:', err);
+      }
+    }
+
+    // Export all bookings to CSV
+    async function exportAllToCSV() {
+      try {
+        const result = await window.api.getBookings();
+        if (!result.success) throw new Error(result.error);
+        
+        const bookings = result.data;
+        
+        // Prepare CSV headers
+        const headers = ['Booking ID', 'Customer Name', 'Contact', 'Event Type', 'Event Date', 'Time', 'Location', 'Package', 'Guests', 'Amount', 'Status', 'Payment', 'Created Date'];
+        
+        // Prepare CSV data
+        const csvData = bookings.map(booking => [
+          booking.id,
+          `"${booking.full_name || ''}"`,
+          `"${booking.contact_number || ''}"`,
+          `"${booking.event_type || ''}"`,
+          booking.event_date ? new Date(booking.event_date).toLocaleDateString() : 'N/A',
+          `"${formatTime(booking.start_time)} - ${formatTime(booking.end_time)}"`,
+          `"${booking.location || ''}"`,
+          `"${packageNames[booking.food_package] || booking.food_package || ''}"`,
+          booking.guest_count || 0,
+          formatCurrency(booking.total_price || booking.package_price || 0),
+          booking.booking_status,
+          booking.payment_status || 'unpaid',
+          new Date(booking.created_at).toLocaleDateString()
+        ]);
+
+        // Combine headers and data
+        const csvContent = [headers, ...csvData]
+          .map(row => row.join(','))
+          .join('\n');
+
+        // Create and download CSV file
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `zaf-kitchen-bookings-${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        alert('CSV file exported successfully!');
+      } catch (err) {
+        alert('Error exporting to CSV: ' + err.message);
+        console.error('CSV export error:', err);
+      }
+    }
+
+    // Export completed events to Excel
+    async function exportCompletedToExcel() {
+      try {
+        const result = await window.api.getBookings();
+        if (!result.success) throw new Error(result.error);
+        
+        const completedEvents = result.data.filter(b => b.booking_status === 'completed');
+        
+        const excelData = completedEvents.map(event => ({
+          'Booking ID': event.id,
+          'Customer Name': event.full_name,
+          'Event Type': event.event_type,
+          'Event Date': event.event_date ? new Date(event.event_date).toLocaleDateString() : 'N/A',
+          'Location': event.location,
+          'Package': packageNames[event.food_package] || event.food_package,
+          'Guest Count': event.guest_count,
+          'Total Amount': formatCurrency(event.total_price || event.package_price || 0),
+          'Rating': event.event_rating || 'N/A',
+          'Feedback': event.event_feedback || 'No feedback',
+          'Completion Date': event.completion_date ? new Date(event.completion_date).toLocaleDateString() : 'N/A'
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(excelData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Completed Events');
+        XLSX.writeFile(wb, `zaf-kitchen-completed-events-${new Date().toISOString().split('T')[0]}.xlsx`);
+        
+        alert('Completed events Excel file exported successfully!');
+      } catch (err) {
+        alert('Error exporting completed events to Excel: ' + err.message);
+      }
+    }
+
+    // Export completed events to PDF
+    async function exportCompletedToPDF() {
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        const result = await window.api.getBookings();
+        if (!result.success) throw new Error(result.error);
+        
+        const completedEvents = result.data.filter(b => b.booking_status === 'completed');
+        
+        doc.setFontSize(16);
+        doc.text('Zaf\'s Kitchen - Completed Events', 14, 15);
+        doc.setFontSize(10);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 22);
+        doc.text(`Total Completed Events: ${completedEvents.length}`, 14, 29);
+        
+        const tableData = completedEvents.map(event => [
+          event.full_name || 'N/A',
+          event.event_type || 'N/A',
+          event.event_date ? new Date(event.event_date).toLocaleDateString() : 'N/A',
+          formatCurrency(event.total_price || event.package_price || 0),
+          event.event_rating || 'N/A',
+          event.event_feedback ? (event.event_feedback.length > 30 ? event.event_feedback.substring(0, 30) + '...' : event.event_feedback) : 'No feedback'
+        ]);
+
+        doc.autoTable({
+          startY: 35,
+          head: [['Customer', 'Event Type', 'Date', 'Amount', 'Rating', 'Feedback']],
+          body: tableData,
+          theme: 'grid',
+          styles: { fontSize: 8 },
+          headStyles: { fillColor: [34, 197, 94] }
+        });
+
+        doc.save(`zaf-kitchen-completed-events-${new Date().toISOString().split('T')[0]}.pdf`);
+        alert('Completed events PDF file exported successfully!');
+      } catch (err) {
+        alert('Error exporting completed events to PDF: ' + err.message);
+      }
+    }
+
+    // Export by date range
+    async function exportByDateRange() {
+      const fromDate = document.getElementById('exportFromDate').value;
+      const toDate = document.getElementById('exportToDate').value;
+      
+      if (!fromDate || !toDate) {
+        alert('Please select both from and to dates');
+        return;
+      }
+
+      try {
+        const result = await window.api.getBookings();
+        if (!result.success) throw new Error(result.error);
+        
+        const from = new Date(fromDate);
+        const to = new Date(toDate);
+        to.setHours(23, 59, 59, 999); // Include the entire end date
+        
+        const filteredBookings = result.data.filter(booking => {
+          const bookingDate = new Date(booking.event_date || booking.created_at);
+          return bookingDate >= from && bookingDate <= to;
+        });
+
+        if (filteredBookings.length === 0) {
+          alert('No bookings found in the selected date range');
+          return;
+        }
+
+        // Export filtered data to Excel
+        const excelData = filteredBookings.map(booking => ({
+          'Booking ID': booking.id,
+          'Customer Name': booking.full_name,
+          'Contact Number': booking.contact_number,
+          'Event Type': booking.event_type,
+          'Event Date': booking.event_date ? new Date(booking.event_date).toLocaleDateString() : 'N/A',
+          'Time': `${formatTime(booking.start_time)} - ${formatTime(booking.end_time)}`,
+          'Location': booking.location,
+          'Package': packageNames[booking.food_package] || booking.food_package,
+          'Guest Count': booking.guest_count,
+          'Total Amount': formatCurrency(booking.total_price || booking.package_price || 0),
+          'Booking Status': booking.booking_status,
+          'Payment Status': booking.payment_status || 'unpaid',
+          'Created Date': new Date(booking.created_at).toLocaleDateString()
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(excelData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Date Range Bookings');
+        XLSX.writeFile(wb, `zaf-kitchen-bookings-${fromDate}-to-${toDate}.xlsx`);
+        
+        alert(`Date range export successful! ${filteredBookings.length} bookings exported.`);
+      } catch (err) {
+        alert('Error exporting date range: ' + err.message);
+        console.error('Date range export error:', err);
+      }
+    }
+
+    // ==================== USER MANAGEMENT FUNCTIONS ====================
+
+    // Load Users - UPDATED: TANGGAL ANG BLOCKED AT INACTIVE
+    async function loadUsers() {
+      const tbody = document.getElementById('usersTable');
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>`;
+      
+      try {
+        const result = await window.api.getAllUsers();
+        if (!result.success) throw new Error(result.error);
+        
+        allUsers = result.data;
+        filteredUsers = [...allUsers];
+        
+        // Update user statistics - UPDATED: TANGGAL ANG BLOCKED AT INACTIVE
+        const totalUsers = allUsers.length;
+        
+        // Calculate active users (users with bookings) and inactive users
+        let activeUsers = 0;
+        let inactiveUsers = 0;
+        
+        for (const user of allUsers) {
+          const hasUserBookings = await hasBookings(user.id);
+          if (hasUserBookings) {
+            activeUsers++;
+          } else {
+            inactiveUsers++;
+          }
+        }
+        
+        animateValue('totalUsers', 0, totalUsers, 800);
+        animateValue('activeUsers', 0, activeUsers, 800);
+        animateValue('inactiveUsers', 0, inactiveUsers, 800);
+        
+        if (allUsers.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-500">No users found</td></tr>`;
+          return;
+        }
+
+        displayUsers();
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-red-500">Error: ${err.message}</td></tr>`;
+        console.error('Error loading users:', err);
+      }
+    }
+
+    // Check if user has bookings
+    async function hasBookings(userId) {
+      try {
+        const result = await window.api.getUserBookingCount(userId);
+        return result.success && result.count > 0;
+      } catch (err) {
+        return false;
+      }
+    }
+
+    // Filter Users - UPDATED: TANGGAL ANG BLOCKED AT INACTIVE
+    async function filterUsers() {
+      const searchTerm = document.getElementById('userSearchInput').value.toLowerCase();
+      const statusFilter = document.getElementById('userStatusFilter').value;
+      
+      filteredUsers = allUsers.filter(async u => {
+        const matchesSearch = 
+          (u.name || '').toLowerCase().includes(searchTerm) ||
+          (u.email || '').toLowerCase().includes(searchTerm);
+        
+        const hasUserBookings = await hasBookings(u.id);
+        const matchesStatus = 
+          statusFilter === 'all' || 
+          (statusFilter === 'active' && hasUserBookings) ||
+          (statusFilter === 'inactive' && !hasUserBookings);
+        
+        return matchesSearch && matchesStatus;
+      });
+
+      displayUsers();
+    }
+
+    // Display Users - UPDATED: TANGGAL ANG BLOCKED AT INACTIVE
+    async function displayUsers() {
+      const tbody = document.getElementById('usersTable');
+      
+      if (filteredUsers.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-500">No users found</td></tr>`;
+        return;
+      }
+
+      // Create user display with booking counts
+      const userDisplays = await Promise.all(filteredUsers.map(async u => {
+        const avatarUrl = u.avatar_url;
+        const userName = u.name || 'N/A';
+        const initials = userName.charAt(0).toUpperCase();
+        
+        const hasUserBookings = await hasBookings(u.id);
+        const userStatus = hasUserBookings ? 'active' : 'inactive';
+        const statusText = hasUserBookings ? 'Active' : 'Inactive';
+        
+        const bookingCountResult = await window.api.getUserBookingCount(u.id);
+        const bookingCount = bookingCountResult.success ? bookingCountResult.count : 0;
+        
+        return `
+          <tr class="border-b hover:bg-gray-50">
+            <td class="px-6 py-3">
+              <div class="flex items-center gap-3">
+                ${avatarUrl ? `
+                  <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden">
+                    <img src="${avatarUrl}" alt="${userName}" class="w-full h-full object-cover">
+                  </div>
+                ` : `
+                  <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                    ${initials}
+                  </div>
+                `}
+                <span class="font-medium">${userName}</span>
+              </div>
+            </td>
+            <td class="px-6 py-3">${u.email || 'N/A'}</td>
+            <td class="px-6 py-3">
+              <span class="px-3 py-1 rounded-full text-xs font-semibold ${
+                userStatus === 'active' ? 'bg-green-100 text-green-700' : 
+                'bg-gray-100 text-gray-700'
+              }">
+                ${statusText}
+              </span>
+            </td>
+            <td class="px-6 py-3">
+              <span class="text-gray-600">
+                <span class="font-semibold">${bookingCount}</span> bookings
+              </span>
+            </td>
+            <td class="px-6 py-3">${u.created_at ? new Date(u.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}</td>
+            <td class="px-6 py-3 text-center">
+              <button onclick="viewUser('${u.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg transition-colors flex items-center gap-1 justify-center text-sm mx-auto">
+                <i class="fas fa-eye"></i> View
+              </button>
+            </td>
+          </tr>
+        `;
+      }));
+
+      tbody.innerHTML = userDisplays.join('');
+    }
+
+    // View User Details - UPDATED: TANGGAL ANG BLOCK AT UNBLOCK
+    async function viewUser(userId) {
+      console.log('🔍 Looking for user ID:', userId);
+      
+      if (allUsers.length === 0) {
+        alert('No users loaded. Please refresh the page.');
+        return;
+      }
+
+      const user = allUsers.find(u => String(u.id) === String(userId));
+      
+      if (!user) {
+        alert('User not found! ID: ' + userId + '\n\nPlease refresh the users list and try again.');
+        console.error('❌ User ID not found:', userId);
+        return;
+      }
+
+      console.log('✅ User found:', user);
+      currentUserId = userId;
+
+      const modal = document.getElementById('userDetailsModal');
+      const content = document.getElementById('userModalContent');
+      const actions = document.getElementById('userModalActions');
+
+      const avatarUrl = user.avatar_url;
+      const userName = user.name || 'N/A';
+      const initials = userName.charAt(0).toUpperCase();
+
+      // Get user booking count and status
+      const bookingResult = await window.api.getUserBookingCount(userId);
+      const bookingCount = bookingResult.success ? bookingResult.count : 0;
+      const hasUserBookings = bookingCount > 0;
+      const userStatus = hasUserBookings ? 'active' : 'inactive';
+      const statusText = hasUserBookings ? 'Active' : 'Inactive';
+
+      content.innerHTML = `
+        <div class="space-y-6">
+          <!-- Header Section -->
+          <div class="flex justify-between items-start pb-4 border-b">
+            <div class="flex items-center gap-3">
+              ${avatarUrl ? `
+                <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden">
+                  <img src="${avatarUrl}" alt="${userName}" class="w-full h-full object-cover">
+                </div>
+              ` : `
+                <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-2xl">
+                  ${initials}
+                </div>
+              `}
+              <div>
+                <h3 class="text-2xl font-bold text-gray-800">${userName}</h3>
+                <p class="text-gray-500 mt-1">User ID: ${user.id}</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="px-4 py-2 rounded-full text-sm font-semibold ${
+                userStatus === 'active' ? 'bg-green-100 text-green-700' : 
+                'bg-gray-100 text-gray-700'
+              }">
+                ${statusText.toUpperCase()}
+              </span>
+            </div>
+          </div>
+
+          <!-- User Information -->
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <h4 class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <i class="fas fa-user text-blue-600"></i>
+              Account Information
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Email Address</p>
+                <p class="text-gray-800 font-medium">${user.email || 'N/A'}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Account Status</p>
+                <p class="text-gray-800 font-medium">${statusText}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Total Bookings</p>
+                <p class="text-gray-800 font-medium">${bookingCount} bookings</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Member Since</p>
+                <p class="text-gray-800 font-medium">${user.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Account Activity -->
+          <div class="pt-4 border-t">
+            <div class="flex items-center gap-2 text-sm text-gray-500">
+              <i class="fas fa-clock"></i>
+              <span>Account created on ${user.created_at ? new Date(user.created_at).toLocaleString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric', 
+                hour: 'numeric', 
+                minute: 'numeric', 
+                hour12: true 
+              }) : 'N/A'}</span>
+            </div>
+            ${user.updated_at ? `
+            <div class="flex items-center gap-2 text-sm text-gray-500 mt-1">
+              <i class="fas fa-sync-alt"></i>
+              <span>Last updated ${new Date(user.updated_at).toLocaleString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric', 
+                hour: 'numeric', 
+                minute: 'numeric', 
+                hour12: true 
+              })}</span>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+
+      actions.innerHTML = `
+        <button onclick="closeUserModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors">
+          Close
+        </button>
+      `;
+
+      modal.classList.remove('hidden');
+    }
+
+    // Close User Modal
+    function closeUserModal() {
+      document.getElementById('userDetailsModal').classList.add('hidden');
+    }
+
+    // ==================== LOGOUT FUNCTION ====================
+
+    // Logout function - UPDATED: COMPLETELY CLOSE THE APP
+    function logout() {
+      if (confirm('Are you sure you want to logout? The application will close.')) {
+        // Close the entire Electron application
+        if (window.api && window.api.quitApp) {
+          window.api.quitApp();
+        } else {
+          // Fallback: Close the window
+          window.close();
+        }
+      }
+    }
+
+    // ==================== AUTO-EXPIRED BOOKINGS CHECK ====================
+
+    async function checkForExpiredBookings() {
+      try {
+        const result = await window.api.checkExpiredBookings();
+        if (result.success && result.cancelled > 0) {
+          console.log(`🔄 Auto-cancelled ${result.cancelled} expired bookings`);
+          // Refresh data if any bookings were cancelled
+          loadBookings();
+          refreshDashboard();
+        }
+      } catch (err) {
+        console.error('Error checking expired bookings:', err);
+      }
+    }
+
+    // Check for expired bookings every minute
+    setInterval(checkForExpiredBookings, 60000);
+
+    // ==================== INITIALIZE ====================
+
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', () => {
+      startDashboardAutoRefresh();
+      
+      // Initial check for expired bookings
+      setTimeout(checkForExpiredBookings, 5000);
+    });
+  </script>
+</body>
+</html>
